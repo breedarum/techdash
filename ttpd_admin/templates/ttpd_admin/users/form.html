@@ -1,0 +1,63 @@
+{% extends "ttpd_admin/base_site.html" %}
+{% load element_error %}
+
+{% block title %}TTPD Admin{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <form action="" method="post" novalidate>
+            <div class="card">
+                <div class="card-header">
+                    <strong>Users</strong>
+                    <small>Form</small>
+                </div>
+
+                <div class="card-body">
+                    {% csrf_token %}
+
+                    {% for field in form %}
+                    <div class="form-group">
+                        {% if field.name != 'is_active' and field.name != 'is_staff' %}
+                        {{ field.label_tag }}
+                        {{ field }}
+
+                        {% if field.help_text %}
+                        <small class="form-text text-muted">
+                            {{ field.help_text }}
+                        </small>
+                        {% endif %}
+                        {% else %}
+                        <label class="custom-control custom-checkbox mb-0"
+                            for="{{ field.id_for_label }}">
+
+                            <input type="checkbox" class="custom-control-input"
+                                id="{{ field.id_for_label }}"
+                                name="{{ field.name }}"
+                                {% if field.value is True %} checked="checked"{% endif %} />
+
+                            <span class="custom-control-indicator"></span>
+                            <span class="custom-control-description">
+                                {{ field.label | escape }}
+                            </span>
+                        </label>
+                        {% endif %}
+
+                        {% if field.errors %}
+                        {% element_error form field.name %}
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <div class="card-footer">
+                    <button type="submit" class="btn btn-sm btn-primary"><i class="fa fa-dot-circle-o"></i> Submit</button>
+                    <button type="reset" class="btn btn-sm btn-danger"><i class="fa fa-ban"></i> Reset</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+

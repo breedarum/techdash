@@ -1,0 +1,29 @@
+{% load element_error %}
+
+<div class="form-group">
+    {{ form.owners.label_tag }}
+
+    {# FIXME: Results to duplicate queries. Look at: #}
+    {# <https://docs.djangoproject.com/en/dev/ref/models/querysets/#select-related> #}
+    {# <https://medium.com/@hakibenita/things-you-must-know-about-django-admin-as-your-app-gets-bigger-6be0b0ee9614> #}
+    {{ form.owners }}
+
+    {% if form.owners.errors %}
+    {% element_error form 'owners' %}
+    {% endif %}
+</div>
+
+<div class="form-group">
+    {{ form.generators.label_tag }}
+
+    {# FIXME: Results to duplicate queries. Look at: #}
+    {# <https://docs.djangoproject.com/en/dev/ref/models/querysets/#select-related> #}
+    {# <https://medium.com/@hakibenita/things-you-must-know-about-django-admin-as-your-app-gets-bigger-6be0b0ee9614> #}
+    {{ form.generators }}
+
+    {% if form.generators.errors %}
+    {% element_error form 'generators' %}
+    {% endif %}
+</div>
+
+

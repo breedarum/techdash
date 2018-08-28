@@ -1,0 +1,64 @@
+{% extends "ttpd_admin/base_site.html" %}
+
+{% block title %}TTPD Admin{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <form action="" method="post" novalidate>
+            <div class="card">
+                <div class="card-header">
+                    <strong>Technology Categories</strong>
+                    <small>Form</small>
+                </div>
+
+                <div class="card-body">
+                    {% csrf_token %}
+
+                    <div class="form-group">
+                        <label for="{{ form.name.id_for_label }}">{{ form.name.label }}</label>
+
+                        <input type="text" class="form-control {% if form.name.errors %}is-invalid{% endif %}" 
+                            id="{{ form.name.id_for_label }}" 
+                            name="{{ form.name.html_name }}"
+                            {% if form.instance.id %}value="{{ form.instance.name }}"{% endif %} />
+
+                        {% if form.name.errors %}
+                            {% for error in form.name.errors %}
+                            <div class="invalid-feedback">{{ error | escape }}</div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.parent.id_for_label }}">{{ form.parent.label }}</label>
+
+                        {# FIXME: Results to duplicate queries. Look at: #}
+                        {# <https://docs.djangoproject.com/en/dev/ref/models/querysets/#select-related> #}
+                        {# <https://medium.com/@hakibenita/things-you-must-know-about-django-admin-as-your-app-gets-bigger-6be0b0ee9614> #}
+                        <select id="{{ form.parent.id_for_label }}" name="{{ form.parent.html_name }}"
+                            class="form-control {% if form.parent.errors %}is-invalid{% endif %}">
+                            {% for x, y in form.parent.field.choices %}
+                            <option value="{{ x }}"{% if form.parent.value == x %} selected{% endif %}>{{ y }}</option>
+                            {% endfor %}
+                        </select>
+
+                        {% if form.parent.errors %}
+                            {% for error in form.parent.errors %}
+                            <div class="invalid-feedback">{{ error | escape }}</div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="card-footer">
+                    <button type="submit" class="btn btn-sm btn-primary"><i class="fa fa-dot-circle-o"></i> Submit</button>
+                    <button type="reset" class="btn btn-sm btn-danger"><i class="fa fa-ban"></i> Reset</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+

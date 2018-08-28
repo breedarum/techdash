@@ -1,0 +1,515 @@
+# forms.py
+#
+# Copyright(c) Exequiel Ceasar Navarrete <esnavarrete1@up.edu.ph>
+# Licensed under MIT
+# Version 1.0.0-alpha1
+
+import json
+import base64
+from django import forms
+from django.contrib.admin.forms import AdminAuthenticationForm as BaseAdminAuthenticationForm
+from django.contrib.auth import password_validation
+from .models import (
+  Technologies,
+  Fundings,
+  TechnologyStatuses,  
+  TechProtectionTypesMetadata,           
+  TechStatus,     
+  User
+)
+
+# ==================================================================
+# [Forms] ::start
+# ==================================================================
+
+class GenericBaseModelForm(forms.ModelForm):
+    """
+    ModelForm class to add basic boostrap v4 form classes to elements
+    """
+
+    def __init__(self, *args, **kwargs):
+        # call the parent class
+        super(GenericBaseModelForm, self).__init__(*args, **kwargs)
+
+        for field in self.fields:
+            classes = self.fields[field].widget.attrs.get('class', '')
+            classes += ' form-control'
+
+            # apply custom select class to select fields
+            if isinstance(self.fields[field].widget, forms.Select):
+                classes += ' custom-select'
+
+            # apply error classes if the element contains error
+            if field in self.errors:
+                classes += ' is-invalid'
+
+            self.fields[field].widget.attrs['class'] = classes
+
+class AdminAuthenticationForm(BaseAdminAuthenticationForm):
+
+    def __init__(self, request=None, *args, **kwargs):
+        super(AdminAuthenticationForm, self).__init__(request, *args, **kwargs)
+
+        # override widget configuration
+        self.fields['username'].widget.attrs['class'] = ' form-control'
+        self.fields['username'].widget.attrs['placeholder'] = 'Username'
+
+        # if 'username' in self.errors:
+        #     self.fields['username'].widget.attrs['class'] += ' is-invalid'
+
+        self.fields['password'].widget.attrs['class'] = ' form-control'
+        self.fields['password'].widget.attrs['placeholder'] = 'Password'
+
+        # if 'password' in self.errors:
+        #     self.fields['password'].widget.attrs['class'] += ' is-invalid'
+
+class TechnologyForm(GenericBaseModelForm):
+    """
+    Technology Form
+    """
+
+    class Meta:
+        model = Technologies
+        fields = [
+          'name',
+          'region',
+          'categories',
+          'industry_sector_isp',
+          'commodities',
+          'protection_level',
+          'year',
+          'description',
+
+          'owners',
+          'generators',
+
+          'adopters',
+          'potential_adopters'
+        ]
+
+        labels = {
+          'industry_sector_isp': 'Industry-Sectors-ISP',
+          'protection_level': 'Protection Level',
+          'potential_adopters': 'Potential Adopter'
+        }
+
+        error_messages = {
+          'name': {
+            'required': 'Name is required'
+          },
+          'region': {
+            'required': 'Region is required'
+          },
+          'categories': {
+            'required': 'Categories is required'
+          },
+          'industry_sector_isp': {
+            'required': 'Industry-Sectors-ISP is required'
+          },
+          'commodities': {
+            'required': 'Commodities is required'
+          },
+          'protection_level': {
+            'required': 'Protection Level is required'
+          },
+          'description': {
+            'required': 'Description is required'
+          }
+        }
+
+class TechnologyFundingsForm(GenericBaseModelForm):
+    """
+    Form for adding funding details about the technology
+    """
+
+    # Associate the funding_type, and technology fields
+    class Meta:
+        model = Fundings
+        fields = [
+          'donor',
+          'investment_amount',
+          'duration_start',
+          'duration_end',
+          'implementing_agencies'
+        ]
+
+        labels = {
+          'investment_amount': 'Investment Amount',
+          'duration_start': 'Duration Start',
+          'duration_end': 'Duration End',
+          'implementing_agencies': 'Implementing Agencies'
+        }
+
+        error_messages = {
+          'donor': {
+            'required': 'Donor is required'
+          },
+          'investment_amount': {
+            'required': 'Investment Amount is required'
+          },
+          'duration_start': {
+            'required': 'Duration Start is required'
+          },
+          'duration_end': {
+            'required': 'Duration End is required'
+          },
+          'implementing_agencies': {
+            'required': 'Implementing Agencies is required'
+          }
+        }
+
+    def clean(self):
+        cleaned_data = super(TechnologyFundingsForm, self).clean()
+
+        donor = cleaned_data.get('donor')
+        investment_amount = cleaned_data.get('investment_amount')
+        duration_start = cleaned_data.get('duration_start')
+        duration_end = cleaned_data.get('duration_end')
+        implementing_agencies = cleaned_data.get('implementing_agencies')
+
+        # check if there is any modified fields
+        modified = False
+
+        # pylint: disable=C0301,R0916
+        if modified is False and (donor or investment_amount or duration_start or duration_end or implementing_agencies):
+            modified = True
+
+        # mark the other fields as error if there is one modified
+        if modified:
+            if not donor:
+                self.add_error('donor', self._meta.error_messages['donor']['required'])
+
+            if not investment_amount:
+                self.add_error('investment_amount', self._meta.error_messages['investment_amount']['required'])
+
+            if not duration_start:
+                self.add_error('duration_start', self._meta.error_messages['duration_start']['required'])
+
+            if not duration_end:
+                self.add_error('duration_end', self._meta.error_messages['duration_end']['required'])
+
+            if not implementing_agencies:
+                self.add_error('implementing_agencies', self._meta.error_messages['implementing_agencies']['required'])
+
+class TechnologyReadinessStatusForm(GenericBaseModelForm):
+    """
+    Status of Readiness implementation Form
+    """
+
+    enable = forms.BooleanField(
+      label='Enable?',
+      required=False,
+      widget=forms.CheckboxInput(attrs={
+        'class': 'custom-control-input'
+      })
+    )
+
+    class Meta:
+        model = TechnologyStatuses
+        fields = [
+          'year_complied'
+        ]
+
+        labels = {
+          'year_complied': 'Year Complied'
+        }
+
+        error_messages = {
+          'year_complied': {
+            'required': 'Year Complied is required'
+          }
+        }
+
+    def __init__(self, *args, **kwargs):
+        # call the parent class
+        super(TechnologyReadinessStatusForm, self).__init__(*args, **kwargs)
+
+        # instance is only present when updating the form so we mark the checkbox as checked if the instance
+        # dict item is present on kwargs
+        if kwargs.get('instance') is not None:
+            self.fields['enable'].initial = True
+
+    def clean(self):
+        # call the parent clean method
+        cleaned_data = super(TechnologyReadinessStatusForm, self).clean()
+
+        year_complied = cleaned_data.get('year_complied')
+
+        # mark the year_complied field as required when the checkbox is checked
+        if cleaned_data.get('enable') is True and not year_complied:
+            self.add_error('year_complied', "Year Complied is required")
+
+class TechnologyIpProtectionMetadataForm(GenericBaseModelForm):
+    """
+    Form for adding IP Protection details to the Technology
+    """
+
+    class Meta:
+        model = TechProtectionTypesMetadata
+        fields = [
+          'application_number',
+          'meta_serial_number',
+          'date_of_filing',
+          'status'
+        ]
+
+        labels = {
+          'application_number': 'Application Number',
+          'meta_serial_number': 'Registration Number',
+          'date_of_filing': 'Date of Filing'
+        }
+
+        error_messages = {
+          'application_number': {
+            'required': 'Application Number is required'
+          },
+          'date_of_filing': {
+            'required': 'Date of Filing is required'
+          },
+          'status': {
+            'required': 'Status is required'
+          }
+        }
+
+    def __init__(self, *args, **kwargs):
+        # extract custom form kwargs for use
+        self.meta_serial_label = kwargs.pop('meta_serial_label', 'Registration Number')
+        self.protection_status_queryset = kwargs.pop(
+          'protection_status_queryset',
+          TechnologyProtectionStatus.objects.all()
+        )
+
+        # call the parent class
+        super(TechnologyIpProtectionMetadataForm, self).__init__(*args, **kwargs)
+
+        # set the new field name for the meta_serial_number field
+        self.fields['meta_serial_number'].label = self.meta_serial_label
+
+        # override the queryset used by the status fields
+        self.fields['status'].queryset = self.protection_status_queryset
+
+    def clean(self):
+        # call the parent clean method
+        cleaned_data = super(TechnologyIpProtectionMetadataForm, self).clean()
+
+        application_num = cleaned_data.get('application_number')
+        meta_serial_num = cleaned_data.get('meta_serial_number')
+        filing_date = cleaned_data.get('date_of_filing')
+        protection_status = cleaned_data.get('status')
+
+        # check if any of the fields is modified. if yes, then add some error if not all of the fields are filled up
+        if application_num or meta_serial_num or filing_date or protection_status:
+            if not application_num:
+                self.add_error('application_number', f"{self.fields['application_number'].label} is required")
+
+            if not meta_serial_num:
+                self.add_error('meta_serial_number', f"{self.meta_serial_label} is required")
+
+            if not filing_date:
+                self.add_error('date_of_filing', f"{self.fields['date_of_filing'].label} is required")
+
+            if not protection_status:
+                self.add_error('status', f"{self.fields['status'].label} is required")
+
+class TradeSecretIpProtectionForm(forms.Form):
+    is_trade_secret = forms.BooleanField(
+      label=f"Is Trade Secret?",
+      required=False,
+      widget=forms.CheckboxInput(attrs={
+        'class': 'custom-control-input'
+      })
+    )
+
+class UsersForm(GenericBaseModelForm):
+    password1 = forms.CharField(
+      label='Password',
+      strip=False,
+      widget=forms.PasswordInput,
+      error_messages={
+        'required': 'Password is required'
+      }
+    )
+
+    password2 = forms.CharField(
+      label='Confirm Password',
+      strip=False,
+      widget=forms.PasswordInput,
+      error_messages={
+        'required': 'Confirm Password is required'
+      }
+    )
+
+    # TODO: if possible, get the roles defined in the roles.py file
+    roles = forms.ChoiceField(
+      label='Roles',
+      choices=[
+        ('', 'Select Role'),
+        ('admin', 'Admin'),
+        ('staff', 'Staff')
+      ],
+      error_messages={
+        'required': 'Roles is required'
+      }
+    )
+
+    field_order = [
+      'username',
+      'password1',
+      'password2',
+      'first_name',
+      'last_name',
+      'email',
+      'roles',
+      'is_active'
+    ]
+
+    class Meta:
+        model = User
+        fields = [
+          'username',
+          'first_name',
+          'last_name',
+          'email',
+          'is_active'
+        ]
+
+        labels = {
+          'first_name': 'First Name',
+          'last_name': 'Last Name',
+          'is_active': 'Is Active?'
+        }
+
+        error_messages = {
+          'username': {
+            'required': 'Username is required'
+          },
+          'first_name': {
+            'required': 'First Name is required'
+          },
+          'last_name': {
+            'required': 'Last Name is required'
+          },
+          'email': {
+            'required': 'Email is required'
+          }
+        }
+
+    def clean_password2(self):
+        password1 = self.cleaned_data.get('password1')
+        password2 = self.cleaned_data.get('password2')
+
+        # check if password 1 and password 2 matches, if not return an error message
+        if password1 and password2 and password1 != password2:
+            raise forms.ValidationError(
+              'Password and Confirm Password does not match. Please check again.',
+              code='password_mismatch'
+            )
+
+        self.instance.username = self.cleaned_data.get('username')
+        password_validation.validate_password(self.cleaned_data.get('password2'), self.instance)
+
+        return password2
+
+    def save(self, commit=True):
+        user = super(UsersForm, self).save(commit=False)
+        user.set_password(self.cleaned_data['password1'])
+
+        # set the staff to True always so that the new user will be able to login to the admin panel
+        #  we will have different strategy for registered users for the frontend client
+        user.is_staff = True
+
+        if commit:
+            user.save()
+
+        return user
+
+class UsersUpdateForm(UsersForm):
+
+    # make password fields optional
+    password1 = forms.CharField(
+      label='Password',
+      required=False,
+      strip=False,
+      widget=forms.PasswordInput,
+      error_messages={
+        'required': 'Password is required'
+      }
+    )
+
+    password2 = forms.CharField(
+      label='Confirm Password',
+      required=False,
+      strip=False,
+      widget=forms.PasswordInput,
+      error_messages={
+        'required': 'Confirm Password is required'
+      }
+    )
+
+    def clean_password2(self):
+        password1 = self.cleaned_data.get('password1')
+        password2 = self.cleaned_data.get('password2')
+
+        # perform the validation only when the password fields are filled up
+        if password1 and password2:
+            return super(UsersUpdateForm, self).clean_password2()
+
+        return password2
+
+    def save(self, commit=True):
+        user = forms.ModelForm.save(self, commit=False)
+        password = self.cleaned_data.get('password1')
+
+        # if password has value then it is assumed that the user wants to change his password
+        if password:
+            user.set_password(password)
+
+        if commit:
+            user.save()
+
+        return user
+
+# ==================================================================
+# [Forms] ::end
+# ==================================================================
+
+# ==================================================================
+# [Formsets] ::start
+# ==================================================================
+
+# pylint: disable=C0103
+TradeSecretIpProtectionFormSet = forms.formset_factory(
+  TradeSecretIpProtectionForm,
+  extra=1,
+  min_num=1,
+  max_num=1,
+  can_delete=False
+)
+
+# pylint: disable=C0103
+TechnologyReadinessStatusFormSet = forms.inlineformset_factory(
+  Technologies,
+  TechnologyStatuses,
+  form=TechnologyReadinessStatusForm,
+  fk_name='technology',
+  extra=1,
+  min_num=1,
+  max_num=1,
+  can_delete=False
+)
+
+# pylint: disable=C0103
+TechnologyFundingsFormSet = forms.inlineformset_factory(
+  Technologies,
+  Fundings,
+  form=TechnologyFundingsForm,
+  fk_name='technology',
+  extra=1,
+  min_num=1,
+  max_num=1,
+  can_delete=False
+)
+
+# ==================================================================
+# [Formsets] ::end
+# ==================================================================

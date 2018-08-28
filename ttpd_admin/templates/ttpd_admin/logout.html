@@ -1,0 +1,30 @@
+{% extends "ttpd_admin/base.html" %}
+{% load i18n static %}
+
+{% block title %}TTPD Admin{% endblock %}
+
+{% block body_attr %}class="app flex-row align-items-center"{% endblock %}
+
+{% block body %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card-group mb-0">
+                <div class="card p-4">
+                    <div class="card-body">
+                        <h1>You have logged out</h1>
+
+                        <p>You're now logged out of the administration panel</p>
+
+                        <p class="mb-0">
+                            <a href="{% url 'admin:index' %}">{% trans 'Log in again' %}</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+

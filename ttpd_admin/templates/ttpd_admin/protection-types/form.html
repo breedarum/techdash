@@ -1,0 +1,44 @@
+{% extends "ttpd_admin/base_site.html" %}
+
+{% block title %}TTPD Admin{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <form action="" method="post" novalidate>
+            <div class="card">
+                <div class="card-header">
+                    <strong>Protection Types</strong>
+                    <small>Form</small>
+                </div>
+
+                <div class="card-body">
+                    {% csrf_token %}
+
+                    <div class="form-group">
+                        <label for="{{ form.name.id_for_label }}">{{ form.name.label }}</label>
+
+                        <input type="text" class="form-control {% if form.name.errors %}is-invalid{% endif %}" 
+                            id="{{ form.name.id_for_label }}" 
+                            name="{{ form.name.html_name }}"
+                            {% if form.instance.id %}value="{{ form.instance.name }}"{% endif %} />
+
+                        {% if form.name.errors %}
+                            {% for error in form.name.errors %}
+                            <div class="invalid-feedback">{{ error | escape }}</div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="card-footer">
+                    <button type="submit" class="btn btn-sm btn-primary"><i class="fa fa-dot-circle-o"></i> Submit</button>
+                    <button type="reset" class="btn btn-sm btn-danger"><i class="fa fa-ban"></i> Reset</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+

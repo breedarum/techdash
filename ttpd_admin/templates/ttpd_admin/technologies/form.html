@@ -1,0 +1,185 @@
+{% extends "ttpd_admin/base_site.html" %}
+{% load element_error non_element_error static %}
+
+{% block title %}TTPD Admin{% endblock %}
+
+{% block head_styles %}
+{{ block.super }}
+<style>
+    .table--s-1 th,
+    .table--s-1 td {
+        border-top: none;
+        font-weight: normal;
+    }
+
+    .custom-file.is-invalid .custom-file-control,
+    .custom-file.is-invalid .custom-file-control::before {
+        border-color: #f86c6b;
+    }
+
+    .custom-file.is-invalid ~ .invalid-feedback { display: block; }
+
+    .custom-file-control:lang(en):empty::after { content: attr(data-selected-file); }
+
+    .card--with-tabs .add-entry.disabled {
+        color: #c2cfd6;
+        pointer-events: none;
+    }
+
+    /* TODO: Transfer this to a global stylesheet */
+    .card--with-tabs .tab-content { border: none; }
+    .card--with-tabs .tab-content .tab-pane { padding: 0; }
+
+    .card--with-tabs .card-header { border-bottom: none;  }
+
+    .card--with-tabs .card-header .card-header-tabs .nav-link {
+        border-top: 1px solid transparent;
+        border-bottom-color: transparent;
+    }
+
+    .card--with-tabs .card-header .card-header-tabs .nav-link:hover,
+    .card--with-tabs .card-header .card-header-tabs .nav-link.active {
+        border-top: 1px solid #c2cfd6;
+        border-bottom-color: transparent;
+    }
+
+    .card--with-tabs .asset--ip-protected,
+    .card--with-tabs .nav-item--ip-protected,
+    .card--with-tabs .form-group--ip-protected {
+        display: none;
+    }
+    .card--with-tabs.card--ip-protected .nav-item--ip-protected { display: list-item; }
+    .card--with-tabs.card--ip-protected .form-group--ip-protected,
+    .card--with-tabs.card--ip-protected .asset--ip-protected {
+        display: block;
+    }
+
+    .card--asset-types .inline-form-wrapper--bordered { border-top: 1px solid #c2cfd6; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <form action="" method="post" enctype="multipart/form-data" novalidate>
+            <div id="form-card" class="card card--with-tabs">
+                <div class="card-header">
+                    <strong>Technologies</strong>
+                    <small>Form</small>
+                </div>
+
+                <div class="card-header">
+                    <ul id="form-tabs" class="nav nav-tabs card-header-tabs" role="tablist">
+                        <li class="nav-item">
+                            <a class="nav-link active"
+                                id="main-tab"
+                                data-toggle="tab"
+                                href="#main"
+                                role="tab"
+                                aria-controls="main"
+                                aria-selected="true">
+                                Main
+                            </a>
+                        </li>
+                        <li class="nav-item nav-item--ip-protected">
+                            <a class="nav-link"
+                                id="ip-protection-tab"
+                                data-toggle="tab"
+                                href="#ip-protection"
+                                role="tab"
+                                aria-controls="ip-protection"
+                                aria-selected="true">
+                                IP Protection
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link"
+                                id="owners-generators-tab"
+                                data-toggle="tab"
+                                href="#owners-generators"
+                                role="tab"
+                                aria-controls="owners-generators"
+                                aria-selected="true">
+                                Owners &amp; Generators
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link"
+                                id="funding-tab"
+                                data-toggle="tab"
+                                href="#funding"
+                                role="tab"
+                                aria-controls="funding"
+                                aria-selected="true">
+                                Funding
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link"
+                                id="adopters-tab"
+                                data-toggle="tab"
+                                href="#adopters"
+                                role="tab"
+                                aria-controls="adopters"
+                                aria-selected="true">
+                                Adopters
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="card-body">
+                    {% csrf_token %}
+
+                    {% non_element_error %}
+
+                    <div class="tab-content">
+                        <!-- [Main] ::start -->
+                        <div class="tab-pane fade show active" id="main" role="tabpanel" aria-labelledby="main-tab">
+                             {% include "./form/main.html" %}
+                        </div>
+                        <!-- [Main] ::end -->
+
+                        <!-- [IP Protection] ::start -->
+                        <div class="tab-pane fade" id="ip-protection" role="tabpanel" aria-labelledby="ip-protection-tab">
+                            {% include "./form/ip-protection.html" %}
+                        </div>
+                        <!-- [IP Protection] ::end -->
+
+                        <!-- [Owners and Generators] ::start -->
+                        <div class="tab-pane fade" id="owners-generators" role="tabpanel" aria-labelledby="owners-generators-tab">
+                            {% include "./form/owners-generators.html" %}
+                        </div>
+                        <!-- [Owners and Generators] ::end -->
+
+                        <!-- [Funding] ::start -->
+                        <div class="tab-pane fade" id="funding" role="tabpanel" aria-labelledby="funding-tab">
+                            {% include "./form/fundings.html" %}
+                        </div>
+                        <!-- [Funding] ::end -->
+
+                        <!-- [Adopters] ::start -->
+                        <div class="tab-pane fade" id="adopters" role="tabpanel" aria-labelledby="adopters-tab">
+                            {% include "./form/adopters.html" %}
+                        </div>
+                        <!-- [Adopters] ::end -->
+
+                    </div>
+                </div>
+
+                <div class="card-footer">
+                    <button type="submit" class="btn btn-sm btn-primary"><i class="fa fa-dot-circle-o"></i> Submit</button>
+                    <button type="reset" class="btn btn-sm btn-danger"><i class="fa fa-ban"></i> Reset</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block body_scripts %}
+{{ block.super }}
+<script src="{% static 'ttpd_admin/js/technologies.js' %}"></script>
+{% endblock %}
+
+

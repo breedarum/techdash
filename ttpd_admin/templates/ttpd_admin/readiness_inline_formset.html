@@ -1,0 +1,35 @@
+{% load element_error %}
+
+<tr class="d-none">
+    <td colspan="2">
+         {{ formset.management_form }}
+    </td>
+</tr>
+{% for inline_form in formset.forms %}
+    <tr>
+        <th scope="row">
+            {% for hidden in inline_form.hidden_fields %}
+            {{ hidden }}
+            {% endfor %}
+
+            <label class="custom-control custom-checkbox mb-0"
+                for="{{ inline_form.enable.id_for_label }}">
+
+                {{ inline_form.enable }}
+                <span class="custom-control-indicator"></span>
+                <span class="custom-control-description">
+                    {{ custom_label | escape }}
+                </span>
+            </label>
+        </th>
+        <td>
+            {{ inline_form.year_complied }}
+
+             {% if inline_form.year_complied.errors %}
+             {% element_error inline_form 'year_complied' %}
+             {% endif %}
+        </td>
+    </tr>
+{% endfor %}
+
+

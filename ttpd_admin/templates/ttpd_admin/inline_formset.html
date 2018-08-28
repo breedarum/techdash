@@ -1,0 +1,26 @@
+{% load element_error %}
+
+{{ formset.management_form }}
+
+{% for inline_form in formset.forms %}
+    <div class="inline-form-wrapper">
+        {{ inline_form.errors }}
+        {% for hidden in inline_form.hidden_fields %}
+        {{ hidden }}
+        {% endfor %}
+
+        {% for field in inline_form.visible_fields %}
+        <div class="form-group{% if forloop.last %} mb-0{% endif %}">
+            {{ field.label_tag }}
+
+            {{ field }}
+
+            {% if field.errors %}
+            {% element_error inline_form field.name %}
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+{% endfor %}
+
+

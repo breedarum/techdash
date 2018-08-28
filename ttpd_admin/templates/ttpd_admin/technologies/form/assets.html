@@ -1,0 +1,21 @@
+{% load asset_inline_formset snake_case %}
+
+{% for asset_type in tech_asset_types %}
+{% with asset_type_snake=asset_type.name|slugify|snake_case %}
+<div class="card card--asset-types card--{{ asset_type.name | slugify }}{% if asset_type.name in tech_asset_types_ip_protected %} asset--ip-protected{% endif %}{% if forloop.last %} mb-0{% endif %}">
+    <div class="card-header">
+        <strong>{{ asset_type.name | escape }}</strong>
+
+        <a href="#" class="add-entry pull-right">
+            <i class="fa fa-plus" aria-hidden="true"></i>
+            Add Entry
+        </a>
+    </div>
+    <div class="card-body">
+        {% asset_inline_formset tech_assets_formset_prefix asset_type_snake %}
+    </div>
+</div>
+{% endwith %}
+{% endfor %}
+
+

@@ -1,0 +1,215 @@
+{% extends "ttpd_admin/base.html" %}
+{% load permission_tags static %}
+
+{% block body_attr %}class="app header-fixed sidebar-fixed aside-menu-fixed aside-menu-hidden"{% endblock %}
+
+{% block head_styles %}
+{{ block.super }}
+
+<style>
+    .sidebar-nav .nav-item-icon {
+        float: left;
+        margin-top: 3px !important;
+    }
+
+    .sidebar-nav .nav-link-text {
+        display: block;
+        overflow: hidden;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<header class="app-header navbar">
+    <button class="navbar-toggler mobile-sidebar-toggler d-lg-none mr-auto" type="button">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+    <a class="navbar-brand" href="{% url 'admin:index' %}"></a>
+    <button class="navbar-toggler sidebar-toggler d-md-down-none" type="button">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <ul class="nav navbar-nav d-md-down-none">
+        <li class="nav-item px-3">
+            <a class="nav-link" href="{% url 'admin:index' %}">Dashboard</a>
+        </li>
+        {% if request.user|has_role:'admin' %}
+        <li class="nav-item px-3">
+            <a class="nav-link" href="{% url 'admin:users_list' %}">Users</a>
+        </li>
+        {% endif %}
+        <li class="nav-item px-3">
+            <a class="nav-link" href="{% url 'admin:index' %}">Settings</a>
+        </li>
+    </ul>
+    <ul class="nav navbar-nav ml-auto mr-3">
+        <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle nav-link" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">
+                {% if request.user.is_authenticated %}
+                {% if request.user.first_name and request.user.last_name %}
+                {{ request.user.first_name }} {{ request.user.last_name }}
+                {% else %}
+                {{ request.user.username }}
+                {% endif %}
+                {% endif %}
+            </a>
+            <div class="dropdown-menu dropdown-menu-right">
+
+                <div class="dropdown-header text-center">
+                    <strong>Settings</strong>
+                </div>
+                <a class="dropdown-item" href="{% url 'admin:index' %}">
+                    <i class="fa fa-user"></i> Profile
+                </a>
+                <a class="dropdown-item" href="{% url 'admin:index' %}">
+                    <i class="fa fa-wrench"></i> Settings
+                </a>
+
+                <div class="divider"></div>
+                <a class="dropdown-item" href="{% url 'admin:logout' %}"><i class="fa fa-lock"></i> Logout</a>
+            </div>
+        </li>
+    </ul>
+</header>
+
+<div class="app-body">
+    <div class="sidebar">
+        <nav class="sidebar-nav">
+            <ul class="nav">
+                <li class="nav-item nav-item--iconized">
+                    <a class="nav-link" href="{% url 'admin:index' %}">
+                        <span class="nav-link-text">Dashboard</span>
+                    </a>
+                </li>
+
+                <li class="nav-item nav-item--iconized">
+                    <a class="nav-link" href="{% url 'ttpd_admin:technologies_list' %}">
+                        <span class="nav-link-text">Technologies</span>
+                    </a>
+                </li>
+
+                {% if request.user|has_role:'admin' %}
+                <li class="nav-item nav-dropdown nav-item--iconized">
+                    <a class="nav-link nav-dropdown-toggle" href="#">
+                        <span class="nav-link-text">Data Management</span>
+                    </a>
+
+                    <ul class="nav-dropdown-items">
+                        <li class="nav-item nav-item--iconized">
+                            <a class="nav-link" href="{% url 'ttpd_admin:commodities_list' %}">
+                                <span class="nav-link-text">Commodities</span>
+                            </a>
+                        </li>
+                        <li class="nav-item nav-item--iconized">
+                            <a class="nav-link"
+                                href="{% url 'ttpd_admin:industries_list' %}">
+                                <span class="nav-link-text">Industries</span>
+                            </a>
+                        </li>
+                        <li class="nav-item nav-item--iconized">
+                            <a class="nav-link"
+                                href="{% url 'ttpd_admin:sectors_list' %}">
+                                <span class="nav-link-text">Sectors</span>
+                            </a>
+                        </li>
+                        <li class="nav-item nav-item--iconized">
+                            <a class="nav-link"
+                                href="{% url 'ttpd_admin:isps_list' %}">
+                                <span class="nav-link-text">ISPs</span>
+                            </a>
+                        </li>
+                        <li class="nav-item nav-item--iconized">
+                            <a class="nav-link"
+                                href="{% url 'ttpd_admin:tech_categories_list' %}">
+                                <span class="nav-link-text">Technology Categories</span>
+                            </a>
+                        </li>
+                        <li class="nav-item nav-item--iconized">
+                            <a class="nav-link"
+                                href="{% url 'ttpd_admin:protection_types_list' %}">
+                                <span class="nav-link-text">Protection Types</span>
+                            </a>
+                        </li>
+                        <li class="nav-item nav-item--iconized">
+                            <a class="nav-link"
+                                href="{% url 'ttpd_admin:adopters_list' %}">
+                                <span class="nav-link-text">Adopters</span>
+                            </a>
+                        </li>
+                        <li class="nav-item nav-item--iconized">
+                            <a class="nav-link"
+                                href="{% url 'ttpd_admin:potential_adopters_list' %}">
+                                <span class="nav-link-text">Potential Adopters</span>
+                            </a>
+                        </li>
+                        <li class="nav-item nav-item--iconized">
+                            <a class="nav-link"
+                                href="{% url 'ttpd_admin:agency_types_list' %}">
+                                <span class="nav-link-text">Agency Types</span>
+                            </a>
+                        </li>
+                        <li class="nav-item nav-item--iconized">
+                            <a class="nav-link"
+                                href="{% url 'ttpd_admin:agencies_list' %}">
+                                <span class="nav-link-text">Agencies</span>
+                            </a>
+                        </li>
+                        <li class="nav-item nav-item--iconized">
+                            <a class="nav-link"
+                                href="{% url 'ttpd_admin:generators_list' %}">
+                                <span class="nav-link-text">Generators</span>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+
+                <li class="nav-item nav-item--iconized">
+                    <a class="nav-link" href="{% url 'ttpd_admin:users_registered_list' %}">
+                        <span class="nav-link-text">Registered Users</span>
+                    </a>
+                </li>
+
+                <li class="nav-item nav-item--iconized">
+                    <a class="nav-link" href="{% url 'ttpd_admin:activity_logs_list' %}">
+                        <span class="nav-link-text">Activity Logs</span>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+
+        <button class="sidebar-minimizer brand-minimizer" type="button"></button>
+    </div>
+
+    <main class="main">
+        {% block breadcrumbs %}
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">Home</li>
+            <li class="breadcrumb-item active">Dashboard</li>
+        </ol>
+        {% endblock %}
+
+        <div class="container-fluid">
+            <div class="animated fadeIn">
+                {% block content %}{% endblock %}
+            </div>
+        </div>
+    </main>
+</div>
+{% endblock %}
+
+{% block body_script_libs %}
+{{ block.super }}
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pace/1.0.2/pace.min.js" 
+    integrity="sha256-EPrkNjGEmCWyazb3A/Epj+W7Qm2pB9vnfXw+X6LImPM=" 
+    crossorigin="anonymous">
+</script>
+{% endblock %}
+
+{% block body_scripts %}
+<script src="{% static 'ttpd_admin/js/app.js' %}"></script>
+{% endblock %}
+
+
+

@@ -1,0 +1,51 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>{% block title %}{% endblock %}</title>
+
+    {% block head_styles %}
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" 
+        integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN"
+        crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/simple-line-icons/2.4.1/css/simple-line-icons.css" 
+        integrity="sha256-q5+FXlQok94jx7fkiX65EGbJ27/qobH6c6gmhngztLE="
+        crossorigin="anonymous" />
+    <link rel="stylesheet" type="text/css" href="{% static 'ttpd_admin/css/style.css' %}" />
+    {% endblock %}
+
+    <link rel="icon" type="image/x-icon" href="{% static 'favicon.ico' %}" />
+</head>
+<body {% block body_attr %}{% endblock %}>
+    {% block body %}{% endblock %}
+
+    {% block body_script_libs %}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js" 
+        integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+        crossorigin="anonymous">
+    </script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.4/lodash.min.js"
+        integrity="sha256-8E6QUcFg1KTnpEU8TFGhpTGHw5fJqB9vCms3OhAYLqw="
+        crossorigin="anonymous">
+    </script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.6/umd/popper.min.js" 
+        integrity="sha256-/GXjBGBWRx8/y1Be190w3hrUOFXNs9qPhthi0tbNnG8=" 
+        crossorigin="anonymous">
+    </script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.0.0-beta/js/bootstrap.min.js" 
+        integrity="sha256-DiWJXXyq81WlPRnDfGmgYZj2aOVCKyEdJ1l+2TmDuAs=" 
+        crossorigin="anonymous">
+    </script>
+    {% endblock %}
+
+    {% block body_scripts %}{% endblock %}
+</body>
+</html>
+
+

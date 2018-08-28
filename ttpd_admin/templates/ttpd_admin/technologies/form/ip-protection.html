@@ -1,0 +1,37 @@
+{% load dynamic_inline_formset snake_case %}
+
+{% for protection_type in technology_protection_types %}
+{% with protection_type_snake=protection_type.name|slugify|snake_case %}
+<div class="card card--protection-types card--{{ protection_type.name | slugify }}{% if forloop.last %} mb-0{% endif %}">
+    <div class="card-header">
+        <strong>{{ protection_type.name | escape }}</strong>
+    </div>
+
+    <div class="card-body">
+        {% if protection_type_snake != 'trade_secret' %}
+        {% dynamic_inline_formset technology_protection_types_formset_prefix protection_type_snake %}
+        {% else %}
+        {{ tech_prot_trade_secret.management_form }}
+        {% for trade_secret_form in tech_prot_trade_secret.forms %}
+
+        {% for hidden in trade_secret_form.hidden_fields %}
+        {{ hidden }}
+        {% endfor %}
+
+        <label class="custom-control custom-checkbox mb-0"
+            for="{{ trade_secret_form.is_trade_secret.id_for_label }}">
+        
+            {{ trade_secret_form.is_trade_secret }}
+            <span class="custom-control-indicator"></span>
+            <span class="custom-control-description">
+                Is {{ protection_type.name | escape }}?
+            </span>
+        </label>
+        {% endfor %}
+        {% endif %}
+    </div>
+</div>
+{% endwith %}
+{% endfor %}
+
+
