@@ -22,6 +22,7 @@ from .forms import (
   UsersForm,
   TechnologyForm,
   TechnologyReadinessStatusFormSet,
+  TechnologyIpProtectionMetadataFormSet,
   TradeSecretIpProtectionFormSet,
   TechnologyFundingsFormSet,
   UsersUpdateForm
@@ -42,7 +43,6 @@ from .models import (
   Generators,
   TechCategories,
   FundingTypes,
-  ProtectionTypeStatus,
   TechStatus,
   Technologies,
   TechnologyCommodities,
@@ -53,6 +53,8 @@ from .models import (
   TechnologyAdopters,
   TechnologyPotentialAdopters,
   TechnologyProtectionTypes,
+  TechnologyProtectionStatus,
+  TechProtectionTypesMetadata,
   TechnologyStatuses,
   Fundings,
   FundingImplementors,
@@ -537,6 +539,7 @@ class TechnologiesCreate(BaseAdminView, HasPermissionsMixin, LoggedCreateView):
             else:
                 context[context_key] = TechnologyReadinessStatusFormSet(prefix=context_key)
 
+        
         # create formsets for technology_funding types
         technology_funding_types = FundingTypes.objects.all()
         context['technology_funding_types'] = technology_funding_types
@@ -549,9 +552,66 @@ class TechnologiesCreate(BaseAdminView, HasPermissionsMixin, LoggedCreateView):
             # if the request method is "POST" pass it to the form set.
             # use different form set when the funding type is extension / commercialization
             if self.request.POST:
-                    context[context_key] = TechnologyFundingsFormSet(self.request.POST, prefix=context_key)
+                context[context_key] = TechnologyFundingsFormSet(self.request.POST, prefix=context_key)
+
             else:
-                    context[context_key] = TechnologyFundingsFormSet(prefix=context_key)
+                context[context_key] = TechnologyFundingsFormSet(prefix=context_key)
+
+        # create formsets for protection types
+        # NOTE: since the model looped in this part can be added or revised according to the given document,
+        #       some part of this code might not work well and may resolve to the default values!
+        protection_types = ProtectionTypes.objects.all()
+        context['technology_protection_types'] = protection_types
+        context['technology_protection_types_formset_prefix'] = 'tech_prot_'
+
+        protection_status_all_queryset = TechnologyProtectionStatus.objects.all()
+        protection_status_no_rev_queryset = TechnologyProtectionStatus.objects.exclude(name='For Revival')
+
+        for protection_type in protection_types:
+            snake_protection_type = snakecase(slugify(protection_type.name))
+            context_key = f"{context['technology_protection_types_formset_prefix']}{snake_protection_type}"
+
+            # customize the query set to be used depending on the protection type
+            protection_status_queryset = protection_status_no_rev_queryset
+            if snake_protection_type == 'patent' or snake_protection_type == 'utility_model':
+                protection_status_queryset = protection_status_all_queryset
+
+            # customize the label for the meta_serial_number label depending on the protection type
+            meta_serial_label = 'Registration Number'
+            if snake_protection_type == 'patent':
+                meta_serial_label = 'Patent Number'
+            elif snake_protection_type == 'plant_variety_protection':
+                meta_serial_label = 'PVP Number'
+
+            # assemble the form's kwargs to be passed to the formset
+            form_kwargs = {
+              'meta_serial_label': meta_serial_label,
+              'protection_status_queryset': protection_status_queryset
+            }
+
+            # if the request method is "POST" pass it to the form set.
+            if self.request.POST:
+                if snake_protection_type != 'trade_secret':
+                    context[context_key] = TechnologyIpProtectionMetadataFormSet(
+                      self.request.POST,
+                      prefix=context_key,
+                      queryset=TechProtectionTypesMetadata.objects.none(),
+                      form_kwargs=form_kwargs
+                    )
+                else:
+                    context[context_key] = TradeSecretIpProtectionFormSet(
+                      self.request.POST,
+                      prefix=context_key
+                    )
+            else:
+                if snake_protection_type != 'trade_secret':
+                    context[context_key] = TechnologyIpProtectionMetadataFormSet(
+                      prefix=context_key,
+                      queryset=TechProtectionTypesMetadata.objects.none(),
+                      form_kwargs=form_kwargs
+                    )
+                else:
+                    context[context_key] = TradeSecretIpProtectionFormSet(prefix=context_key)
 
         return context
 
@@ -582,7 +642,7 @@ class TechnologiesCreate(BaseAdminView, HasPermissionsMixin, LoggedCreateView):
                     self.save_technology_categories(technology, form.cleaned_data.get('categories'))
 
                     # save the industry sectors
-                    self.save_technology_industry_sector_isp(technology, form.cleaned_data.get('industry_sector_isp'))
+                    self.save_technology_industry_sector_isp(technology, form.cleaned_data.get('industry_sectors'))
 
                     # save the commodities
                     self.save_technology_commodities(technology, form.cleaned_data.get('commodities'))
@@ -606,6 +666,7 @@ class TechnologiesCreate(BaseAdminView, HasPermissionsMixin, LoggedCreateView):
                     # TODO: add file type and size restriction!
                     # NOTE: orphaned files or files that are not referenced should be only deleted using a
                     #       a cron service to prevent any data loss to occur. See https://stackoverflow.com/a/16041527
+                    self.save_assets(technology, context)
 
                     # save the adopters and ip protection metadata only if the protection level is IP Protected
                     if protection_level.name.lower() == 'ip protected':
@@ -666,6 +727,8 @@ class TechnologiesCreate(BaseAdminView, HasPermissionsMixin, LoggedCreateView):
                 valid = False
 
                 break
+
+        return valid
 
     def save_adopters(self, technology, cleaned_adopters):
         num_adopters = len(cleaned_adopters)
@@ -736,20 +799,20 @@ class TechnologiesCreate(BaseAdminView, HasPermissionsMixin, LoggedCreateView):
             # add it all at once
             TechnologyCommodities.objects.bulk_create(commodities)
 
-    def save_technology_industry_sector_isp(self, technology, cleaned_industry_sector_isp):
+    def save_technology_industry_sector_isp(self, technology, cleaned_industry_sectors):
         num_industry_sector_isp = len(cleaned_industry_sector_isp)
 
         if num_industry_sector_isp > 0:
             industry_sector_isp = []
 
             # create m2m industry sector instance on the fly
-            for industry_sector in cleaned_industry_sector_isp:
+            for industry_sector_isp in cleaned_industry_sector_isp:
                 industry_sector_isp.append(
-                  TechnologyIndustrySectorsISPs(technology=technology, industry_sector=industry_sector_isp)
+                  TechnologyIndustrySectors(technology=technology, industry_sector=industry_sector)
                 )
 
             # add it all at once
-            TechnologyIndustrySectorsISPs.objects.bulk_create(industry_sector_isp)
+            TechnologyIndustrySectorISPs.objects.bulk_create(industry_sector_isp)
 
     def save_technology_categories(self, technology, cleaned_categories):
         num_categories = len(cleaned_categories)
@@ -764,7 +827,7 @@ class TechnologiesCreate(BaseAdminView, HasPermissionsMixin, LoggedCreateView):
             # add it all at once
             TechnologyCategories.objects.bulk_create(categories)
 
-    def save_fundings(self, technology, context):
+    def save_technology_fundings(self, technology, context):
         technology_funding_implementors = []
 
         for funding_type in context['technology_funding_types']:
@@ -782,8 +845,6 @@ class TechnologiesCreate(BaseAdminView, HasPermissionsMixin, LoggedCreateView):
 
                     # add relation to the funding type
                     funding_type_item.funding_type = funding_type
-
-                    tem.properties = b64_serialized.decode()
 
                     # TODO: bulk create does not work since we do need the reference to an existing funding
                     #       which have its pk been already set so we create here in the loop. This can be a
@@ -979,7 +1040,7 @@ class TechnologiesUpdate(BaseAdminView, HasPermissionsMixin, LoggedUpdateView):
 
         # create formsets for protection types
         protection_types = ProtectionTypes.objects.all()
-        tech_protections_related = TechnologyProtectionTypes.objects.filter(technology=technology) \
+        tech_protections_related = ProtectionTypes.objects.filter(technology=technology) \
             .select_related('protection_type', 'protection_type_meta')
 
         context['technology_protection_types'] = protection_types
@@ -1019,7 +1080,7 @@ class TechnologiesUpdate(BaseAdminView, HasPermissionsMixin, LoggedUpdateView):
                   protection_type == tech_protection_related.protection_type and
                   tech_protection_related.protection_type_meta is not None
                 ):
-                    formset_queryset = TechnologyProtectionTypesMetadata.objects.filter(
+                    formset_queryset = TechProtectionTypesMetadata.objects.filter(
                       id=tech_protection_related.protection_type_meta.id
                     )
 
@@ -1030,7 +1091,7 @@ class TechnologiesUpdate(BaseAdminView, HasPermissionsMixin, LoggedUpdateView):
 
             # set queryset and form_kwargs for all forms other than trade secret form
             if snake_protection_type != 'trade_secret':
-                formset_kwargs['queryset'] = TechnologyProtectionTypesMetadata.objects.none()
+                formset_kwargs['queryset'] = TechProtectionTypesMetadata.objects.none()
                 formset_kwargs['form_kwargs'] = {
                   'meta_serial_label': meta_serial_label,
                   'protection_status_queryset': protection_status_queryset
@@ -1422,13 +1483,13 @@ class TechnologiesUpdate(BaseAdminView, HasPermissionsMixin, LoggedUpdateView):
                         # create an instance of the protection type if it is trade secret
                         if is_trade_secret is True:
                             ip_protections.append(
-                              TechnologyProtectionTypes(technology=technology, protection_type=protection_type)
+                              ProtectionTypes(technology=technology, protection_type=protection_type)
                             )
 
                         # mark the reference of trade secret for deletion
                         if is_trade_secret is False:
                             del_ip_protections.append(
-                              TechnologyProtectionTypes.objects.filter(
+                              ProtectionTypes.objects.filter(
                                 technology=technology,
                                 protection_type=protection_type
                               )[0].id
@@ -1449,7 +1510,7 @@ class TechnologiesUpdate(BaseAdminView, HasPermissionsMixin, LoggedUpdateView):
                            meta_item.status is None)
                         ):
                             del_ip_protections.append(
-                              TechnologyProtectionTypes.objects.filter(
+                              ProtectionTypes.objects.filter(
                                 technology=technology,
                                 protection_type=protection_type
                               )[0].id
@@ -1465,7 +1526,7 @@ class TechnologiesUpdate(BaseAdminView, HasPermissionsMixin, LoggedUpdateView):
                         meta_item.save()
 
                         # check if the meta is already associated, if not create an association
-                        meta_queryset = TechnologyProtectionTypes.objects.filter(
+                        meta_queryset = ProtectionTypes.objects.filter(
                           technology=technology,
                           protection_type=protection_type,
                           protection_type_meta=meta_item
@@ -1473,7 +1534,7 @@ class TechnologiesUpdate(BaseAdminView, HasPermissionsMixin, LoggedUpdateView):
                         num_result_meta_query_set = len(meta_queryset)
                         if num_result_meta_query_set == 0:
                             ip_protections.append(
-                              TechnologyProtectionTypes(
+                              ProtectionTypes(
                                 technology=technology,
                                 protection_type=protection_type,
                                 protection_type_meta=meta_item
@@ -1483,16 +1544,16 @@ class TechnologiesUpdate(BaseAdminView, HasPermissionsMixin, LoggedUpdateView):
         # del_ip_protections = []
         num_del_meta_protections = len(del_meta_protections)
         if num_del_meta_protections > 0:
-            TechnologyProtectionTypesMetadata.objects.filter(pk__in=del_meta_protections).delete()
+            TechProtectionTypesMetadata.objects.filter(pk__in=del_meta_protections).delete()
 
         num_del_ip_protections = len(del_ip_protections)
         if num_del_ip_protections > 0:
-            TechnologyProtectionTypes.objects.filter(pk__in=del_ip_protections).delete()
+            ProtectionTypes.objects.filter(pk__in=del_ip_protections).delete()
 
         # add all at once when there is m2m relationships to be created
         num_ip_protections = len(ip_protections)
         if num_ip_protections > 0:
-            TechnologyProtectionTypes.objects.bulk_create(ip_protections)
+            ProtectionTypes.objects.bulk_create(ip_protections)
 
 class TechnologiesDelete(BaseAdminView, HasPermissionsMixin, LoggedDeleteView):
     required_permission = 'remove_technologies'
@@ -1541,7 +1602,7 @@ class TechnologiesDelete(BaseAdminView, HasPermissionsMixin, LoggedDeleteView):
                     fundings.delete()
 
                     # delete protection types associated to the technology
-                    protection_types = TechnologyProtectionTypes.objects.filter(technology=self.object) \
+                    protection_types = TProtectionTypes.objects.filter(technology=self.object) \
                         .select_related('protection_type_meta')
 
                     for protection_type in protection_types:
@@ -1561,7 +1622,6 @@ class TechnologiesDelete(BaseAdminView, HasPermissionsMixin, LoggedDeleteView):
             return HttpResponseBadRequest(re)
 
         return HttpResponseRedirect(success_url)
-
 
 # NOTE: if we need to customize the user model, a complete guide on the link is given below
 #       <https://simpleisbetterthancomplex.com/tutorial/2016/07/22/how-to-extend-django-user-model.html>

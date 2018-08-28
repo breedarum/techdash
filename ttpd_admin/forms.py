@@ -13,7 +13,8 @@ from .models import (
   Technologies,
   Fundings,
   TechnologyStatuses,  
-  TechProtectionTypesMetadata,           
+  TechProtectionTypesMetadata, 
+  TechnologyProtectionStatus,        
   TechStatus,     
   User
 )
@@ -504,6 +505,15 @@ TechnologyFundingsFormSet = forms.inlineformset_factory(
   Fundings,
   form=TechnologyFundingsForm,
   fk_name='technology',
+  extra=1,
+  min_num=1,
+  max_num=1,
+  can_delete=False
+)
+
+TechnologyIpProtectionMetadataFormSet = forms.modelformset_factory(
+  TechProtectionTypesMetadata,
+  form=TechnologyIpProtectionMetadataForm,
   extra=1,
   min_num=1,
   max_num=1,

@@ -3,9 +3,6 @@
 <div class="form-group">
     {{ form.potential_adopters.label_tag }}
 
-    {# FIXME: Results to duplicate queries. Look at: #}
-    {# <https://docs.djangoproject.com/en/dev/ref/models/querysets/#select-related> #}
-    {# <https://medium.com/@hakibenita/things-you-must-know-about-django-admin-as-your-app-gets-bigger-6be0b0ee9614> #}
     {{ form.potential_adopters }}
 
     {% if form.potential_adopters.errors %}
@@ -16,9 +13,6 @@
 <div class="form-group form-group--ip-protected">
     {{ form.adopters.label_tag }}
 
-    {# FIXME: Results to duplicate queries. Look at: #}
-    {# <https://docs.djangoproject.com/en/dev/ref/models/querysets/#select-related> #}
-    {# <https://medium.com/@hakibenita/things-you-must-know-about-django-admin-as-your-app-gets-bigger-6be0b0ee9614> #}
     {{ form.adopters }}
 
     {% if form.adopters.errors %}

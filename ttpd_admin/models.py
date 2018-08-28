@@ -91,6 +91,16 @@ class ProtectionTypes(models.Model):
     def __str__(self):
         return self.name
 
+class TechnologyProtectionStatus(models.Model):
+    name = models.CharField(max_length=255)
+
+    class Meta:
+        verbose_name = "technology protection status"
+        verbose_name_plural = "technology protection statuses"
+
+    def __str__(self):
+        return self.name
+
 class AdopterTypes(models.Model):
     name = models.CharField(max_length=255)
 
@@ -231,21 +241,11 @@ class FundingTypes(models.Model):
     def __str__(self):
         return self.name
 
-class ProtectionTypeStatus(models.Model):
-    name = models.CharField(max_length=255)
-    
-    class Meta:
-        verbose_name = "protection status"
-        verbose_name_plural = "protection statuses"
-
-    def __str__(self):
-        return self.name
-
 class TechProtectionTypesMetadata(models.Model):
     application_number = models.CharField(max_length=255, blank=True)
     meta_serial_number = models.CharField(max_length=255, blank=True)
     date_of_filing = models.DateField(blank=True)
-    status = models.ForeignKey(ProtectionTypeStatus, blank=True, on_delete=models.CASCADE)
+    status = models.ForeignKey(TechnologyProtectionStatus, blank=True, on_delete=models.CASCADE)
 
     class Meta:
         verbose_name = "technology protection type metadata"
@@ -417,6 +417,7 @@ class TechnologyStatuses(models.Model):
     class Meta:
         verbose_name = "technology status"
         verbose_name_plural = "technology statuses"
+
 
 class Fundings(models.Model):
     investment_amount = models.PositiveIntegerField(blank=True)
