@@ -538,13 +538,13 @@ class TechnologiesCreate(BaseAdminView, HasPermissionsMixin, LoggedCreateView):
                 context[context_key] = TechnologyReadinessStatusFormSet(prefix=context_key)
 
         # create formsets for technology_funding types
-        funding_types = FundingTypes.objects.all()
-        context['funding_types'] = funding_types
-        context['funding_types_formset_prefix'] = 'tech_funding_'
+        technology_funding_types = FundingTypes.objects.all()
+        context['technology_funding_types'] = technology_funding_types
+        context['technology_funding_types_formset_prefix'] = 'tech_funding_'
 
-        for funding_type in funding_types:
+        for funding_type in technology_funding_types:
             snake_funding_type = snakecase(slugify(funding_type.name))
-            context_key = "{context['technology_funding_types_formset_prefix']}{snake_funding_type}"
+            context_key = f"{context['technology_funding_types_formset_prefix']}{snake_funding_type}"
 
             # if the request method is "POST" pass it to the form set.
             # use different form set when the funding type is extension / commercialization
@@ -656,9 +656,9 @@ class TechnologiesCreate(BaseAdminView, HasPermissionsMixin, LoggedCreateView):
 
                 break
 
-        for funding_type in context['funding_types']:
+        for funding_type in context['technology_funding_types']:
             snake_funding_type = snakecase(slugify(funding_type.name))
-            context_key = f"{context['funding_types_formset_prefix']}{snake_funding_type}"
+            context_key = f"{context['technology_funding_types_formset_prefix']}{snake_funding_type}"
             funding_type_form = context[context_key]
 
             # check if the inline formsets are valid or not
@@ -767,9 +767,9 @@ class TechnologiesCreate(BaseAdminView, HasPermissionsMixin, LoggedCreateView):
     def save_fundings(self, technology, context):
         technology_funding_implementors = []
 
-        for funding_type in context['funding_types']:
+        for funding_type in context['technology_funding_types']:
             snake_funding_type = snakecase(slugify(funding_type.name))
-            context_key = f"{context['funding_types_formset_prefix']}{snake_funding_type}"
+            context_key = f"{context['technology_funding_types_formset_prefix']}{snake_funding_type}"
             funding_type_form = context[context_key]
 
             if funding_type_form.is_valid():
@@ -1182,7 +1182,6 @@ class TechnologiesUpdate(BaseAdminView, HasPermissionsMixin, LoggedUpdateView):
 
         return valid
 
-    # TODO: implement a diffing logic so that only items that needs to be added/removed are persisted
     def save_technology_categories(self, technology, cleaned_categories):
         num_categories = len(cleaned_categories)
 
@@ -1199,7 +1198,6 @@ class TechnologiesUpdate(BaseAdminView, HasPermissionsMixin, LoggedUpdateView):
             # add it all at once
             TechnologyCategories.objects.bulk_create(categories)
 
-    # TODO: implement a diffing logic so that only items that needs to be added/removed are persisted
     def save_technology_industry_sector_isp(self, technology, cleaned_industry_sector_isp):
         num_industry_sector_isp = len(cleaned_industry_sector_isp)
 
@@ -1218,7 +1216,6 @@ class TechnologiesUpdate(BaseAdminView, HasPermissionsMixin, LoggedUpdateView):
             # add it all at once
             TechnologyIndustrySectorsISPs.objects.bulk_create(industry_sector_isp)
 
-    # TODO: implement a diffing logic so that only items that needs to be added/removed are persisted
     def save_technology_commodities(self, technology, cleaned_commodities):
         num_commodities = len(cleaned_commodities)
 
@@ -1235,7 +1232,6 @@ class TechnologiesUpdate(BaseAdminView, HasPermissionsMixin, LoggedUpdateView):
             # add it all at once
             TechnologyCommodities.objects.bulk_create(commodities)
 
-    # TODO: implement a diffing logic so that only items that needs to be added/removed are persisted
     def save_technology_generators(self, technology, cleaned_generators):
         num_generators = len(cleaned_generators)
 
@@ -1252,7 +1248,6 @@ class TechnologiesUpdate(BaseAdminView, HasPermissionsMixin, LoggedUpdateView):
             # add it all at once
             TechGenerators.objects.bulk_create(generators)
 
-    # TODO: implement a diffing logic so that only items that needs to be added/removed are persisted
     def save_potential_adopters(self, technology, cleaned_potential_adopters):
         num_potential_adopters = len(cleaned_potential_adopters)
 
@@ -1270,8 +1265,7 @@ class TechnologiesUpdate(BaseAdminView, HasPermissionsMixin, LoggedUpdateView):
 
             # add it all at once
             TechnologyPotentialAdopters.objects.bulk_create(potential_adopters)
-
-    # TODO: implement a diffing logic so that only items that needs to be added/removed are persisted
+    
     def save_technology_owners(self, technology, cleaned_owners):
         num_owners = len(cleaned_owners)
 
@@ -1287,8 +1281,7 @@ class TechnologiesUpdate(BaseAdminView, HasPermissionsMixin, LoggedUpdateView):
 
             # add it all at once
             TechnologyOwners.objects.bulk_create(owners)
-
-    # TODO: implement a diffing logic so that only items that needs to be added/removed are persisted
+    
     def save_adopters(self, technology, cleaned_adopters):
         num_adopters = len(cleaned_adopters)
 
@@ -1306,8 +1299,7 @@ class TechnologiesUpdate(BaseAdminView, HasPermissionsMixin, LoggedUpdateView):
 
             # add it all at once
             TechnologyAdopters.objects.bulk_create(adopters)
-
-    # TODO: implement a diffing logic so that only items that needs to be added/removed are persisted
+    
     def save_status_of_readiness_data(self, technology, context):
         statuses = []
         update_statuses = []
@@ -1355,7 +1347,6 @@ class TechnologiesUpdate(BaseAdminView, HasPermissionsMixin, LoggedUpdateView):
         if num_statuses > 0:
             TechnologyStatuses.objects.bulk_create(statuses)
 
-    # TODO: implement a diffing logic so that only items that needs to be added/removed are persisted
     def save_technology_fundings(self, technology, context):
         technology_funding_implementors = []
 
@@ -1413,9 +1404,6 @@ class TechnologiesUpdate(BaseAdminView, HasPermissionsMixin, LoggedUpdateView):
         if num_technology_funding_implementors > 0:
             FundingImplementors.objects.bulk_create(technology_funding_implementors)
 
-    # TODO: implement a diffing logic so that only items that needs to be added/removed are persisted
-    # NOTE: since the model looped in this part can be added or revised according to the given document,
-    #       some part of this code might not work well and may resolve to the default values!
     def save_ip_protection_data(self, technology, context):
         ip_protections = []
         del_ip_protections = []
