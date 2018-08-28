@@ -46,12 +46,11 @@
                     </div>
                     <div class="form-group">
                         <label for="{{ form.specific_commodity.id_for_label }}">{{ form.specific_commodity.label }}</label>
-                        <select id="{{ form.specific_commodity.id_for_label }}" name="{{ form.specific_commodity.html_name }}"
-                            class="form-control {% if form.specific_commodity.errors %}is-invalid{% endif %}">
-                            {% for x, y in form.specific_commodity.field.choices %}
-                            <option value="{{ x }}"{% if form.specific_commodity.value == x %} selected{% endif %}>{{ y }}</option>
-                            {% endfor %}
-                        </select>
+
+                        <input type="text" class="form-control {% if form.specific_commodity.errors %}is-invalid{% endif %}" 
+                            id="{{ form.specific_commodity.id_for_label }}" 
+                            specific_commodity="{{ form.specific_commodity.html_name }}"
+                            {% if form.instance.id %}value="{{ form.instance.specific_commodity }}"{% endif %} />
 
                         {% if form.specific_commodity.errors %}
                             {% for error in form.specific_commodity.errors %}

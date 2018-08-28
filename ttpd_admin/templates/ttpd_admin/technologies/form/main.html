@@ -23,9 +23,6 @@
 <div class="form-group">
     {{ form.categories.label_tag }}
 
-    {# FIXME: Results to duplicate queries. Look at: #}
-    {# <https://docs.djangoproject.com/en/dev/ref/models/querysets/#select-related> #}
-    {# <https://medium.com/@hakibenita/things-you-must-know-about-django-admin-as-your-app-gets-bigger-6be0b0ee9614> #}
     {{ form.categories }}
 
     {% if form.categories.errors %}
@@ -36,9 +33,6 @@
 <div class="form-group">
     {{ form.industry_sector_isp.label_tag }}
 
-    {# FIXME: Results to duplicate queries. Look at: #}
-    {# <https://docs.djangoproject.com/en/dev/ref/models/querysets/#select-related> #}
-    {# <https://medium.com/@hakibenita/things-you-must-know-about-django-admin-as-your-app-gets-bigger-6be0b0ee9614> #}
     {{ form.industry_sector_isp }}
 
     {% if form.industry_sector_isp.errors %}
@@ -49,9 +43,6 @@
 <div class="form-group">
     {{ form.commodities.label_tag }}
 
-    {# FIXME: Results to duplicate queries. Look at: #}
-    {# <https://docs.djangoproject.com/en/dev/ref/models/querysets/#select-related> #}
-    {# <https://medium.com/@hakibenita/things-you-must-know-about-django-admin-as-your-app-gets-bigger-6be0b0ee9614> #}
     {{ form.commodities }}
 
     {% if form.commodities.errors %}
@@ -61,10 +52,7 @@
 
 <div class="form-group">
     {{ form.protection_level.label_tag }}
-
-    {# FIXME: Results to duplicate queries. Look at: #}
-    {# <https://docs.djangoproject.com/en/dev/ref/models/querysets/#select-related> #}
-    {# <https://medium.com/@hakibenita/things-you-must-know-about-django-admin-as-your-app-gets-bigger-6be0b0ee9614> #}
+    
     {{ form.protection_level }}
 
     {% if form.protection_level.errors %}

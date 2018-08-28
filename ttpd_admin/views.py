@@ -656,9 +656,9 @@ class TechnologiesCreate(BaseAdminView, HasPermissionsMixin, LoggedCreateView):
 
                 break
 
-        for funding_type in context['technology_funding_types']:
+        for funding_type in context['funding_types']:
             snake_funding_type = snakecase(slugify(funding_type.name))
-            context_key = f"{context['technology_funding_types_formset_prefix']}{snake_funding_type}"
+            context_key = f"{context['funding_types_formset_prefix']}{snake_funding_type}"
             funding_type_form = context[context_key]
 
             # check if the inline formsets are valid or not
@@ -764,12 +764,12 @@ class TechnologiesCreate(BaseAdminView, HasPermissionsMixin, LoggedCreateView):
             # add it all at once
             TechnologyCategories.objects.bulk_create(categories)
 
-    def save_technology_fundings(self, technology, context):
+    def save_fundings(self, technology, context):
         technology_funding_implementors = []
 
-        for funding_type in context['technology_funding_types']:
+        for funding_type in context['funding_types']:
             snake_funding_type = snakecase(slugify(funding_type.name))
-            context_key = f"{context['technology_funding_types_formset_prefix']}{snake_funding_type}"
+            context_key = f"{context['funding_types_formset_prefix']}{snake_funding_type}"
             funding_type_form = context[context_key]
 
             if funding_type_form.is_valid():
@@ -793,13 +793,13 @@ class TechnologiesCreate(BaseAdminView, HasPermissionsMixin, LoggedCreateView):
                     # create the objects for the implementors
                     for implementing_agency in clean_data_ref.get('implementing_agencies'):
                         technology_funding_implementors.append(
-                          TechnologyFundingImplementors(funding=funding_type_item, implementor=implementing_agency)
+                          FundingImplementors(funding=funding_type_item, implementor=implementing_agency)
                         )
 
         # add all at once when there is m2m relationships to be created
         num_technology_funding_implementors = len(technology_funding_implementors)
         if num_technology_funding_implementors > 0:
-            TechnologyFundingImplementors.objects.bulk_create(technology_funding_implementors)
+            FundingImplementors.objects.bulk_create(technology_funding_implementors)
 
     def save_status_of_readiness_data(self, technology, context):
         statuses = []
@@ -942,8 +942,8 @@ class TechnologiesUpdate(BaseAdminView, HasPermissionsMixin, LoggedUpdateView):
         context = {}
 
         # create formsets for technology_funding types
-        tech_fundings_related = TechnologyFundings.objects.filter(technology=technology).select_related('funding_type')
-        technology_funding_types = TechnologyFundingTypes.objects.all()
+        tech_fundings_related = Fundings.objects.filter(technology=technology).select_related('funding_type')
+        technology_funding_types = FundingTypes.objects.all()
         context['technology_funding_types'] = technology_funding_types
         context['technology_funding_types_formset_prefix'] = 'tech_funding_'
 
@@ -969,13 +969,6 @@ class TechnologiesUpdate(BaseAdminView, HasPermissionsMixin, LoggedUpdateView):
 
             # if the request method is "POST" pass it to the form set.
             # use different form set when the funding type is extension / commercialization
-            if self.request.POST:
-                context[context_key] = ExtensionAndCommercializationTechnologyFundingsFormSet(
-                      self.request.POST,
-                      **formset_kwargs
-                    )
-            else:
-                context[context_key] = ExtensionAndCommercializationTechnologyFundingsFormSet(**formset_kwargs)
 
         return context
 
@@ -1403,22 +1396,22 @@ class TechnologiesUpdate(BaseAdminView, HasPermissionsMixin, LoggedUpdateView):
                     funding_type_item.save()
 
                     # clear all existing relationships first
-                    TechnologyFundingImplementors.objects.filter(funding=funding_type_item).delete()
+                    FundingImplementors.objects.filter(funding=funding_type_item).delete()
 
                     # create the objects for the implementors
                     for implementing_agency in clean_data_ref.get('implementing_agencies'):
                         technology_funding_implementors.append(
-                          TechnologyFundingImplementors(funding=funding_type_item, implementor=implementing_agency)
+                          FundingImplementors(funding=funding_type_item, implementor=implementing_agency)
                         )
 
         num_del_technology_funding = len(del_technology_funding)
         if num_del_technology_funding > 0:
-            TechnologyFundings.objects.filter(pk__in=del_technology_funding, technology=technology).delete()
+            Fundings.objects.filter(pk__in=del_technology_funding, technology=technology).delete()
 
         # add all at once when there is m2m relationships to be created
         num_technology_funding_implementors = len(technology_funding_implementors)
         if num_technology_funding_implementors > 0:
-            TechnologyFundingImplementors.objects.bulk_create(technology_funding_implementors)
+            FundingImplementors.objects.bulk_create(technology_funding_implementors)
 
     # TODO: implement a diffing logic so that only items that needs to be added/removed are persisted
     # NOTE: since the model looped in this part can be added or revised according to the given document,
@@ -1552,10 +1545,10 @@ class TechnologiesDelete(BaseAdminView, HasPermissionsMixin, LoggedDeleteView):
                     TechnologyStatuses.objects.filter(technology=self.object).delete()
 
                     # delete fundings associated to the technology
-                    fundings = TechnologyFundings.objects.filter(technology=self.object)
+                    fundings = Fundings.objects.filter(technology=self.object)
 
                     for funding in fundings:
-                        TechnologyFundingImplementors.objects.filter(funding=funding).delete()
+                        FundingImplementors.objects.filter(funding=funding).delete()
 
                     fundings.delete()
 
