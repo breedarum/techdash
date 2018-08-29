@@ -109,7 +109,7 @@ class AdopterTypes(models.Model):
         verbose_name_plural = "adopter types"
 
     def get_absolute_url(self):
-        return reverse('ttpd_admin:adopter_type_update', kwargs={'pk': self.id})
+        return reverse('ttpd_admin:adopter_types_update', kwargs={'pk': self.id})
 
     def __str__(self):
         return self.name
