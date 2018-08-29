@@ -252,8 +252,14 @@ class TechProtectionTypesMetadata(models.Model):
         verbose_name_plural = "technology protection type metadatas"
 
 class TechStatus(models.Model):
-    name = models.CharField(max_length=255)
 
+    STATUS_CHOICES = (
+      ('development', 'Development'),
+      ('rdru', 'RDRU'),
+    )
+    name = models.CharField(max_length=255)
+  #  main_status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='active')
+    
     class Meta:
         verbose_name = "technology status"
         verbose_name_plural = "technology statuses"
