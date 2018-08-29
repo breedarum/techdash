@@ -50,7 +50,9 @@ class Sectors(models.Model):
         return reverse('ttpd_admin:sectors_update', kwargs={'pk': self.id})
 
     def __str__(self):
-        return self.name
+        # return self.name
+        # return u'%s %s' % (self.name, self.parent.name)
+        return (self.name + " - " + self.parent.name)
 
 class ISPs(models.Model):
     name = models.CharField(max_length=255)
@@ -66,7 +68,7 @@ class ISPs(models.Model):
         return reverse('ttpd_admin:isps_update', kwargs={'pk': self.id})
 
     def __str__(self):
-        return self.name
+        return (self.name + " - " + self.parent.name + " - " + self.parent.parent.name)
 
 class ProtectionLevels(models.Model):
     name = models.CharField(max_length=255)
