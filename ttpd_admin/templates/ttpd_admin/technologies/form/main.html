@@ -12,7 +12,7 @@
 
 <div class="form-group">
     {{ form.region.label_tag }}
-
+    <!-- FIX: show region name and roman number-->
     {{ form.region }}
 
     {% if form.region.errors %}
@@ -33,6 +33,7 @@
 <div class="form-group">
     {{ form.industry_sector_isp.label_tag }}
 
+    <!-- FIX: show industries and sectors along with the isp -->
     {{ form.industry_sector_isp }}
 
     {% if form.industry_sector_isp.errors %}
@@ -91,6 +92,7 @@
                     </tr>
                 </thead>
                 <tbody>
+                    <!-- FIX: disable text if checkbox in unchecked -->
                     {% for tech_status in tech_statuses %}
                     {% with tech_status_snake=tech_status.name|slugify|snake_case %}
                     {% readiness_inline_formset tech_statuses_formset_prefix tech_status_snake label=tech_status.name %}

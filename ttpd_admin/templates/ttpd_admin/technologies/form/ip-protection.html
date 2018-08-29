@@ -6,7 +6,7 @@
     <div class="card-header">
         <strong>{{ protection_type.name | escape }}</strong>
     </div>
-
+    <!-- FIX: protectionstatus -->
     <div class="card-body">
         {% if protection_type_snake != 'trade_secret' %}
         {% dynamic_inline_formset technology_protection_types_formset_prefix protection_type_snake %}

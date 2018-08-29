@@ -30,6 +30,7 @@
                         {% endif %}
                     </div>
                     <div class="form-group">
+                        <!-- FIX: if others is selected, indicate and add a new adopter type -->
                         <label for="{{ form.adopter_type.id_for_label }}">{{ form.adopter_type.label }}</label>
                         <select required="required" id="{{ form.adopter_type.id_for_label }}" name="{{ form.adopter_type.html_name }}"
                             class="form-control {% if form.adopter_type.errors %}is-invalid{% endif %}">

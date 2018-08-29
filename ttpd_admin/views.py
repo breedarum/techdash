@@ -1623,6 +1623,8 @@ class TechnologiesDelete(BaseAdminView, HasPermissionsMixin, LoggedDeleteView):
 
         return HttpResponseRedirect(success_url)
 
+# ADD: TechnologiesDetails
+
 # NOTE: if we need to customize the user model, a complete guide on the link is given below
 #       <https://simpleisbetterthancomplex.com/tutorial/2016/07/22/how-to-extend-django-user-model.html>
 class UsersList(BaseAdminView, HasRoleMixin, ListView):

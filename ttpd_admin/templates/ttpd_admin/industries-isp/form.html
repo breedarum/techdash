@@ -30,6 +30,7 @@
                         {% endif %}
                     </div>
                     <div class="form-group">
+                        <!-- FIX: show sector parent industry -->
                         <label for="{{ form.parent.id_for_label }}">{{ form.parent.label }}</label>
                         <select id="{{ form.parent.id_for_label }}" name="{{ form.parent.html_name }}"
                             class="form-control {% if form.parent.errors %}is-invalid{% endif %}">

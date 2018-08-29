@@ -79,19 +79,16 @@
                 {% endif %}
                 {% else  %}
 
-                {% if request.user|has_role:'staff' %}
                 <p class="mb-0">
                     No items available.
-                </p>
-                {% endif %}
-                {% if request.user|has_role:'admin' %}
-                <p class="mb-0">
-                    No items available. Would you like to 
+                    {% if request.user|has_role:'admin' %}
+                     Would you like to 
                     <a href="{% url 'ttpd_admin:technologies_create' %}">
                         add one?
                     </a>
+                    {% endif %}
                 </p>
-                {% endif %}
+
                 {% endif %}
             </div>
         </div>
