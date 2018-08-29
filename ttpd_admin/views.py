@@ -1602,7 +1602,7 @@ class TechnologiesDelete(BaseAdminView, HasPermissionsMixin, LoggedDeleteView):
                     fundings.delete()
 
                     # delete protection types associated to the technology
-                    protection_types = TProtectionTypes.objects.filter(technology=self.object) \
+                    protection_types = TechnologyProtectionTypes.objects.filter(technology=self.object) \
                         .select_related('protection_type_meta')
 
                     for protection_type in protection_types:
