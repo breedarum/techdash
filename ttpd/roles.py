@@ -147,4 +147,3 @@ class LevelFourUser(AbstractUserRole):
       'level_four'
     ])
 
-

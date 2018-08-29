@@ -1,5 +1,7 @@
 {% extends "ttpd_admin/base_site.html" %}
 
+{% load permission_tags static %}
+
 {% block title %}TTPD Admin{% endblock %}
 
 {% block content %}
@@ -9,10 +11,12 @@
             <div class="card-header">
                 Technologies
 
+                {% if request.user|has_role:'admin' %}
                 <a href="{% url 'ttpd_admin:technologies_create' %}" class="btn btn-sm btn-primary pull-right">
                     <i class="fa fa-plus"></i> 
                     Add
                 </a>
+                {% endif %}
             </div>
             <div class="card-body">
                 {% if object_list.count > 0 %}
@@ -29,12 +33,14 @@
                             <td scope="row">
                                 <a href="{{ technologies.get_absolute_url }}">{{ technologies.name }}</a>
                             </td>
+                            {% if request.user|has_role:'admin' %}
                             <td class="w-25">
                                 <a href="{% url 'ttpd_admin:technologies_delete' pk=technologies.id %}" class="btn btn-sm btn-danger pull-right">
                                     <i class="fa fa-trash"></i> 
                                     Delete
                                 </a>
                             </td>
+                            {% endif %}
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -72,12 +78,20 @@
                 </ul>
                 {% endif %}
                 {% else  %}
+
+                {% if request.user|has_role:'staff' %}
+                <p class="mb-0">
+                    No items available.
+                </p>
+                {% endif %}
+                {% if request.user|has_role:'admin' %}
                 <p class="mb-0">
                     No items available. Would you like to 
                     <a href="{% url 'ttpd_admin:technologies_create' %}">
                         add one?
                     </a>
                 </p>
+                {% endif %}
                 {% endif %}
             </div>
         </div>
