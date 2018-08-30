@@ -202,9 +202,9 @@ class Generators(models.Model):
         # check if the entry has title or not, if it has append a space to it
         # for using in the entry's str representation
         if self.title is not None:
-            title = f"{self.title} "
+            title = '%s' % "{self.title}"
 
-        return f"{title}{self.first_name} {self.last_name}"
+        return '%s %s %s' % "{title}{self.first_name} {self.last_name}"
 
 class Regions(models.Model):
     name = models.CharField(max_length=80)
