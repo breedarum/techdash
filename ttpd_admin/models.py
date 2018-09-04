@@ -4,7 +4,6 @@
 # Licensed under MIT
 # Version 1.0.0-alpha1
 
-from secrets import token_hex
 from pathlib import Path
 from django.db import models
 from django.dispatch import receiver
@@ -50,8 +49,6 @@ class Sectors(models.Model):
         return reverse('ttpd_admin:sectors_update', kwargs={'pk': self.id})
 
     def __str__(self):
-        # return self.name
-        # return u'%s %s' % (self.name, self.parent.name)
         return (self.name + " - " + self.parent.name)
 
 class ISPs(models.Model):
@@ -69,6 +66,18 @@ class ISPs(models.Model):
 
     def __str__(self):
         return (self.name + " - " + self.parent.name + " - " + self.parent.parent.name)
+
+class Regions(models.Model):
+    name = models.CharField(max_length=80)
+    region_roman = models.CharField(max_length=80)
+    region_canonical = models.CharField(max_length=160)
+
+    class Meta:
+        verbose_name = "region"
+        verbose_name_plural = "regions"
+
+    def __str__(self):
+        return self.region_canonical
 
 class ProtectionLevels(models.Model):
     name = models.CharField(max_length=255)
@@ -183,7 +192,7 @@ class Generators(models.Model):
       ('deceased', 'Deceased')
     )
 
-    title = models.CharField(max_length=20, null=True, blank=True)
+    title = models.CharField(max_length=255, null=True, blank=True)
     first_name = models.CharField(max_length=255)
     middle_name = models.CharField(max_length=255, null=True, blank=True)
     last_name = models.CharField(max_length=255)
@@ -202,21 +211,9 @@ class Generators(models.Model):
         # check if the entry has title or not, if it has append a space to it
         # for using in the entry's str representation
         if self.title is not None:
-            title = '%s' % "{self.title}"
+            title = u'%s' % (self.title)
 
-        return '%s %s %s' % "{title}{self.first_name} {self.last_name}"
-
-class Regions(models.Model):
-    name = models.CharField(max_length=80)
-    region_roman = models.CharField(max_length=80)
-    region_canonical = models.CharField(max_length=160)
-
-    class Meta:
-        verbose_name = "region"
-        verbose_name_plural = "regions"
-
-    def __str__(self):
-        return self.region_canonical
+        return u'%s %s %s' % (title,self.first_name,self.last_name)
 
 class TechCategories(models.Model):
     name = models.CharField(max_length=255)
@@ -237,13 +234,14 @@ class FundingTypes(models.Model):
     name = models.CharField(max_length=255)
 
     class Meta:
-        verbose_name = "funding type"
-        verbose_name_plural = "funding types"
+        verbose_name = "technology funding type"
+        verbose_name_plural = "technology funding types"
 
     def __str__(self):
         return self.name
 
 class TechProtectionTypesMetadata(models.Model):
+
     application_number = models.CharField(max_length=255, blank=True)
     meta_serial_number = models.CharField(max_length=255, blank=True)
     date_of_filing = models.DateField(blank=True)
@@ -254,14 +252,8 @@ class TechProtectionTypesMetadata(models.Model):
         verbose_name_plural = "technology protection type metadatas"
 
 class TechStatus(models.Model):
-
-    STATUS_CHOICES = (
-      ('development', 'Development'),
-      ('rdru', 'RDRU'),
-    )
     name = models.CharField(max_length=255)
-  #  main_status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='active')
-    
+
     class Meta:
         verbose_name = "technology status"
         verbose_name_plural = "technology statuses"
@@ -277,13 +269,14 @@ class Technologies(models.Model):
     est_ownership_cost = models.PositiveIntegerField(null=True, blank=True)
     region = models.ForeignKey(Regions, null=True, blank=True, on_delete=models.CASCADE)
 
+
     commodities = models.ManyToManyField(
       Commodities,
       through='TechnologyCommodities',
       through_fields=('technology', 'commodity')
     )
 
-    industry_sector_isp = models.ManyToManyField(
+    industry_sector_isps = models.ManyToManyField(
       ISPs,
       through='TechnologyIndustrySectorISPs',
       through_fields=('technology', 'industry_sector_isp')
@@ -296,7 +289,7 @@ class Technologies(models.Model):
     )
 
     generators = models.ManyToManyField(
-      'Generators',
+      Generators,
       through='TechnologyGenerators',
       through_fields=('technology', 'generator'),
       blank=True
@@ -425,7 +418,6 @@ class TechnologyStatuses(models.Model):
     class Meta:
         verbose_name = "technology status"
         verbose_name_plural = "technology statuses"
-
 
 class Fundings(models.Model):
     investment_amount = models.PositiveIntegerField(blank=True)

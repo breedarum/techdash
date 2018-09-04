@@ -31,13 +31,13 @@
 </div>
 
 <div class="form-group">
-    {{ form.industry_sector_isp.label_tag }}
+    {{ form.industry_sector_isps.label_tag }}
 
     <!-- FIX: show industries and sectors along with the isp -->
-    {{ form.industry_sector_isp }}
+    {{ form.industry_sector_isps }}
 
-    {% if form.industry_sector_isp.errors %}
-    {% element_error form 'industry_sector_isp' %}
+    {% if form.industry_sector_isps.errors %}
+    {% element_error form 'industry_sector_isps' %}
     {% endif %}
 </div>
 

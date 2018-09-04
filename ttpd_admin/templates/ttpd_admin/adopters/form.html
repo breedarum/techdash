@@ -54,7 +54,7 @@
 
                         <input type="text" class="form-control {% if form.address.errors %}is-invalid{% endif %}" 
                             id="{{ form.address.id_for_label }}" 
-                            address="{{ form.address.html_name }}"
+                            name="{{ form.address.html_name }}"
                             {% if form.instance.id %}value="{{ form.instance.name }}"{% endif %}/>
 
                         {% if form.address.errors %}
@@ -68,7 +68,7 @@
 
                         <input type="text" class="form-control {% if form.phone_number.errors %}is-invalid{% endif %}" 
                             id="{{ form.phone_number.id_for_label }}" 
-                            address="{{ form.phone_number.html_name }}"
+                            name="{{ form.phone_number.html_name }}"
                             {% if form.instance.id %}value="{{ form.instance.name }}"{% endif %}/>
 
                         {% if form.phone_number.errors %}
@@ -82,7 +82,7 @@
 
                         <input type="text" class="form-control {% if form.fax_number.errors %}is-invalid{% endif %}" 
                             id="{{ form.fax_number.id_for_label }}" 
-                            address="{{ form.fax_number.html_name }}"
+                            name="{{ form.fax_number.html_name }}"
                             {% if form.instance.id %}value="{{ form.instance.name }}"{% endif %}/>
 
                         {% if form.fax_number.errors %}
@@ -96,7 +96,7 @@
 
                         <input type="text" class="form-control {% if form.email_address.errors %}is-invalid{% endif %}" 
                             id="{{ form.email_address.id_for_label }}" 
-                            address="{{ form.email_address.html_name }}"
+                            name="{{ form.email_address.html_name }}"
                             {% if form.instance.id %}value="{{ form.instance.name }}"{% endif %}/>
 
                         {% if form.email_address.errors %}

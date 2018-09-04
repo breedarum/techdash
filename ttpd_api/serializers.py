@@ -9,6 +9,11 @@ from rest_framework import serializers
 from ttpd_admin.models import (
   Commodities,
   Industries,
+  ProtectionLevels,
+  TechCategories,
+  Generators,
+  TechStatus,
+  Technologies,
   User
 )
 
@@ -25,6 +30,71 @@ class IndustriesSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Industries
         fields = '__all__'
+
+class ProtectionLevelsSerializer(serializers.HyperlinkedModelSerializer):
+    url = serializers.HyperlinkedIdentityField(view_name='api_protection_levels_detail')
+
+    class Meta:
+        model = ProtectionLevels
+        fields = '__all__'
+
+class TechnologyCategoriesSerializer(serializers.HyperlinkedModelSerializer):
+    url = serializers.HyperlinkedIdentityField(view_name='api_technology_categories_detail')
+    parent = serializers.PrimaryKeyRelatedField(read_only=True)
+
+    class Meta:
+        model = TechCategories
+        fields = ['id', 'url', 'name', 'parent']
+
+class GeneratorsSerializer(serializers.HyperlinkedModelSerializer):
+    agency = serializers.ReadOnlyField(source='agency.name')
+
+    class Meta:
+        model = Generators
+        fields = ['id', 'title', 'first_name', 'last_name', 'availability', 'agency']
+
+class TechStatusSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = TechStatus
+        fields = ['name']
+
+    # override string representation
+    def to_representation(self, instance):
+        status_metadata = TechnologyStatuses.objects.filter(tech_status=instance)[0]
+
+        return {
+          'name': instance.name,
+          'year_complied': status_metadata.year_complied
+        }
+
+class TechnologiesSerializer(serializers.HyperlinkedModelSerializer):
+    url = serializers.HyperlinkedIdentityField(view_name='api_technologies_detail')
+    protection_level = serializers.ReadOnlyField(source='protection_level.name')
+    region = serializers.ReadOnlyField(source='region.region_normalized_canonical')
+    categories = serializers.SlugRelatedField(many=True, read_only=True, slug_field='name')
+    commodities = serializers.SlugRelatedField(many=True, read_only=True, slug_field='name')
+    generators = GeneratorsSerializer(many=True, read_only=True)
+    industry_sector_isps = serializers.SlugRelatedField(many=True, read_only=True, slug_field='name')
+    owners = serializers.SlugRelatedField(many=True, read_only=True, slug_field='name')
+    statuses = TechStatusSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Technologies
+        fields = [
+          'id',
+          'url',
+          'name',
+          'year',
+          'description',
+          'protection_level',
+          'region',
+          'categories',
+          'commodities',
+          'industry_sector_isps',
+          'generators',
+          'owners',
+          'statuses'
+        ]
 
 class UsersSerializer(serializers.ModelSerializer):
     class Meta:

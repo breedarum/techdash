@@ -64,7 +64,6 @@ INSTALLED_APPS = [
     'clear_cache',
     'rolepermissions',
     'rest_framework',
-    'rest_framework_datatables',
     'corsheaders',
     'ttpd_admin',
     'ttpd_api',

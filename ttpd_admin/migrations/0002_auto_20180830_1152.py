@@ -78,7 +78,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Technologies',
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=True, verbose_name='ID')),
                 ('name', models.CharField(max_length=255)),
                 ('year', models.CharField(blank=True, max_length=5, null=True)),
                 ('description', models.TextField()),

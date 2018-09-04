@@ -76,7 +76,7 @@ class TechnologyForm(GenericBaseModelForm):
           'name',
           'region',
           'categories',
-          'industry_sector_isps',
+          'industry_sector_isp',
           'commodities',
           'protection_level',
           'year',
@@ -240,6 +240,98 @@ class TechnologyReadinessStatusForm(GenericBaseModelForm):
         # mark the year_complied field as required when the checkbox is checked
         if cleaned_data.get('enable') is True and not year_complied:
             self.add_error('year_complied', "Year Complied is required")
+
+# class TechnologyAdoptersInfoForm(GenericBaseModelForm):
+#     """
+#     Status of Readiness implementation Form
+#     """
+#     # enable = forms.BooleanField(
+#     #   label='Enable?',
+#     #   required=False,
+#     #   widget=forms.CheckboxInput(attrs={
+#     #     'class': 'custom-control-input'
+#     #   })
+#     # )
+
+#     class Meta:
+#         model = TechnologyAdopters
+#         fields = [
+#           'financial_analysis',
+#           'investment_cost',
+#           'expected_returns',
+#           'internal_rate_return',
+#           'net_present_value',
+#           'break_even_point'
+#         ]
+
+#         labels = {
+#           'financial_analysis': 'Financial Analysis',
+#           'investment_cost': 'Investment Cost',
+#           'expected_returns': 'Expected Returns',
+#           'internal_rate_return': 'Internal Rate Return (IRR)',
+#           'net_present_value': 'Net Present Value (NPV)',
+#           'break_even_point': 'Break Even Point'
+#         }
+
+#         error_messages = {
+#           'financial_analysis': {
+#             'required': 'Financial Analysis is required'
+#           },
+#           'investment_cost': {
+#             'required': 'Investment Cost is required'
+#           },
+#           'expected_returns': {
+#             'required': 'Expected Returns is required'
+#           },
+#           'internal_rate_return': {
+#             'required': 'Internal Rate Return (IRR) is required'
+#           },
+#           'net_present_value': {
+#             'required': 'Net Present Value (NPV) is required'
+#           },
+#           'break_even_point': {
+#             'required': 'Break Even Point is required'
+#           }
+#         }
+
+#     def __init__(self, *args, **kwargs):
+#         # call the parent class
+#         super(TechnologyAdoptersInfoForm, self).__init__(*args, **kwargs)
+
+#         # instance is only present when updating the form so we mark the checkbox as checked if the instance
+#         # dict item is present on kwargs
+#         if kwargs.get('instance') is not None:
+#             self.fields['enable'].initial = True
+
+#     def clean(self):
+#         # call the parent clean method
+#         cleaned_data = super(TechnologyAdoptersInfoForm, self).clean()
+
+#         financial_analysis = cleaned_data.get('financial_analysis')
+#         investment_cost = cleaned_data.get('investment_cost')
+#         expected_returns = cleaned_data.get('expected_returns')
+#         internal_rate_return = cleaned_data.get('internal_rate_return')
+#         net_present_value = cleaned_data.get('net_present_value')
+#         break_even_point = cleaned_data.get('break_even_point')
+
+#         # # mark the year_complied field as required when the checkbox is checked
+#         # if cleaned_data.get('enable') is True and not financial_analysis:
+#         #     self.add_error('financial_analysis', "Financial Analysis is required")
+
+#         # if cleaned_data.get('enable') is True and not investment_cost:
+#         #     self.add_error('investment_cost', "Investment Cost is required")
+
+#         # if cleaned_data.get('enable') is True and not expected_returns:
+#         #     self.add_error('expected_returns', "Expected Returns is required")
+
+#         # if cleaned_data.get('enable') is True and not internal_rate_return:
+#         #     self.add_error('internal_rate_return', "Internal Rate Return (IRR) is required")
+
+#         # if cleaned_data.get('enable') is True and not net_present_value:
+#         #     self.add_error('net_present_value', "Net Present Value (NPV) is required")
+
+#         # if cleaned_data.get('enable') is True and not break_even_point:
+#         #     self.add_error('break_even_point', "Break Even Point is required")
 
 class TechnologyIpProtectionMetadataForm(GenericBaseModelForm):
     """
@@ -521,6 +613,15 @@ TechnologyIpProtectionMetadataFormSet = forms.modelformset_factory(
   can_delete=False
 )
 
+# TechnologyAdoptersFormSet = forms.inlineformset_factory(
+#   Technologies,
+#   TechnologyAdopters,
+#   form=TechnologyAdoptersInfoForm,
+#   extra=1,
+#   min_num=1,
+#   max_num=1,
+#   can_delete=False
+# )
 
 # ==================================================================
 # [Formsets] ::end

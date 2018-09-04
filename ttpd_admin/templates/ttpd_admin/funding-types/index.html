@@ -1,7 +1,5 @@
 {% extends "ttpd_admin/base_site.html" %}
 
-{% load permission_tags static %}
-
 {% block title %}TTPD Admin{% endblock %}
 
 {% block content %}
@@ -9,14 +7,12 @@
     <div class="col-12">
         <div class="card">
             <div class="card-header">
-                Technologies
+                Funding Types
 
-                {% if request.user|has_role:'admin' %}
-                <a href="{% url 'ttpd_admin:technologies_create' %}" class="btn btn-sm btn-primary pull-right">
+                <a href="{% url 'ttpd_admin:funding_types_create' %}" class="btn btn-sm btn-primary pull-right">
                     <i class="fa fa-plus"></i> 
                     Add
                 </a>
-                {% endif %}
             </div>
             <div class="card-body">
                 {% if object_list.count > 0 %}
@@ -25,36 +21,20 @@
                         <tr>
                             <th scope="col">Name</th>
                             <th scope="col">&nbsp;</th>
-                            <th scope="col">&nbsp;</th>
-                            <th scope="col">&nbsp;</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {% for technologies in object_list %}
+                        {% for funding_type in object_list %}
                         <tr>
                             <td scope="row">
-                                <a href="{{ technologies.get_absolute_url }}">{{ technologies.name }}</a>
+                                <a href="{{ funding_type.get_absolute_url }}">{{ funding_type.name }}</a>
                             </td>
-                            {% if request.user|has_role:'admin' %}
-                            <td class="w-20">
-                                <a href="{% url 'ttpd_admin:technologies_delete' pk=technologies.id %}" class="btn btn-sm btn-danger pull-right">
+                            <td class="w-25">
+                                <a href="{{ funding_type.get_absolute_url }}delete" class="btn btn-sm btn-danger pull-right">
                                     <i class="fa fa-trash"></i> 
                                     Delete
                                 </a>
                             </td>
-                            <td class="w-20">
-                                <a href="{% url 'ttpd_admin:technologies_update' pk=technologies.id %}" class="btn btn-sm btn-primary pull-right">
-                                    <i class="fa fa-angle-double-up"></i> 
-                                    Update
-                                </a>
-                            </td>
-                            <td class="w-20">
-                                <a href="{% url 'ttpd_admin:technologies_update' pk=technologies.id %}" class="btn btn-sm btn-primary pull-right">
-                                    <i class="f"></i> 
-                                    See Details
-                                </a>
-                            </td>
-                            {% endif %}
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -64,7 +44,7 @@
                 <ul class="pagination">
                     {% if page_obj.has_previous %}
                     <li class="page-item">
-                        <a class="page-link" href="{% url 'ttpd_admin:technologies_list' %}?page={{ page_obj.previous_page_number }}">
+                        <a class="page-link" href="{% url 'ttpd_admin:funding_types_list' %}?page={{ page_obj.previous_page_number }}">
                             Prev
                         </a>
                     </li>
@@ -76,7 +56,7 @@
                     {% else  %}
                     <li class="page-item">
                     {% endif %}
-                        <a class="page-link" href="{% url 'ttpd_admin:technologies_list' %}?page={{ page_number }}">
+                        <a class="page-link" href="{% url 'ttpd_admin:funding_types_list' %}?page={{ page_number }}">
                             {{ page_number }}
                         </a>
                     </li>
@@ -84,7 +64,7 @@
 
                     {% if page_obj.has_next %}
                     <li class="page-item">
-                        <a class="page-link" href="{% url 'ttpd_admin:technologies_list' %}?page={{ page_obj.next_page_number }}">
+                        <a class="page-link" href="{% url 'ttpd_admin:funding_types_list' %}?page={{ page_obj.next_page_number }}">
                             Next
                         </a>
                     </li>
@@ -92,17 +72,12 @@
                 </ul>
                 {% endif %}
                 {% else  %}
-
                 <p class="mb-0">
-                    No items available.
-                    {% if request.user|has_role:'admin' %}
-                     Would you like to 
-                    <a href="{% url 'ttpd_admin:technologies_create' %}">
+                    No items available. Would you like to 
+                    <a href="{% url 'ttpd_admin:funding_types_create' %}">
                         add one?
                     </a>
-                    {% endif %}
                 </p>
-
                 {% endif %}
             </div>
         </div>

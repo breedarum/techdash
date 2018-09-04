@@ -571,7 +571,8 @@ class TechnologiesCreate(BaseAdminView, HasPermissionsMixin, LoggedCreateView):
             else:
                 context[context_key] = TechnologyReadinessStatusFormSet(prefix=context_key)
 
-         # create formsets for technology_funding types
+        
+        # create formsets for technology_funding types
         technology_funding_types = FundingTypes.objects.all()
         context['technology_funding_types'] = technology_funding_types
         context['technology_funding_types_formset_prefix'] = 'tech_funding_'
@@ -644,6 +645,22 @@ class TechnologiesCreate(BaseAdminView, HasPermissionsMixin, LoggedCreateView):
                 else:
                     context[context_key] = TradeSecretIpProtectionFormSet(prefix=context_key)
 
+        # # create formsets for status of readiness
+        # tech_adopters = TechnologyAdopters.objects.all()
+        # context['tech_adopters'] = tech_adopters
+        # context['tech_adopters_formset_prefix'] = 'tech_adopter_'
+
+        # for tech_adopter in tech_adopters:
+        #     snake_status = snakecase(slugify(tech_adopter.name))
+        #     context_key = f"{context['tech_adopters_formset_prefix']}{snake_status}"
+
+        #     # if the request method is "POST" pass it to the form set.
+        #     if self.request.POST:
+        #         context[context_key] = TechnologyAdoptersFormSet(self.request.POST, prefix=context_key)
+        #     else:
+        #         context[context_key] = TechnologyAdoptersFormSet(prefix=context_key)
+
+        
         return context
 
     def form_valid(self, form):
@@ -673,7 +690,7 @@ class TechnologiesCreate(BaseAdminView, HasPermissionsMixin, LoggedCreateView):
                     self.save_technology_categories(technology, form.cleaned_data.get('categories'))
 
                     # save the industry sectors
-                    self.save_technology_industry_sector_isp(technology, form.cleaned_data.get('industry_sector_isps'))
+                    self.save_technology_industry_sector_isp(technology, form.cleaned_data.get('industry_sector_isp'))
 
                     # save the commodities
                     self.save_technology_commodities(technology, form.cleaned_data.get('commodities'))
@@ -692,6 +709,11 @@ class TechnologiesCreate(BaseAdminView, HasPermissionsMixin, LoggedCreateView):
 
                     # save the technology fundings
                     self.save_technology_fundings(technology, context)
+
+                    # save the assets
+                    # TODO: add file type and size restriction!
+                    # NOTE: orphaned files or files that are not referenced should be only deleted using a
+                    #       a cron service to prevent any data loss to occur. See https://stackoverflow.com/a/16041527
 
                     # save the adopters and ip protection metadata only if the protection level is IP Protected
                     if protection_level.name.lower() == 'ip protected':
@@ -753,6 +775,17 @@ class TechnologiesCreate(BaseAdminView, HasPermissionsMixin, LoggedCreateView):
 
                 break
 
+        # for tech_adopter in context['tech_adopters']:
+        #     snake_adopter = snakecase(slugify(tech_adopter.name))
+        #     context_key = f"{context['tech_adopters_formset_prefix']}{snake_adopter}"
+        #     tech_adopter_form = context[context_key]
+
+        #     # check if the inline formsets are valid or not
+        #     if not tech_adopter_form.is_valid():
+        #         valid = False
+
+        #         break
+        
         return valid
 
     def save_adopters(self, technology, cleaned_adopters):
@@ -769,6 +802,28 @@ class TechnologiesCreate(BaseAdminView, HasPermissionsMixin, LoggedCreateView):
 
             # add it all at once
             TechnologyAdopters.objects.bulk_create(adopters)
+
+        # adopters = []
+
+        # for tech_adopter in context['tech_adopters']:
+        #     snake_adopter = snakecase(slugify(tech_adopter.name))
+        #     context_key = f"{context['tech_adopters_formset_prefix']}{snake_adopter}"
+        #     tech_adopter_form = context[context_key]
+
+        #     if tech_adopter_form.is_valid():
+        #         tech_adopter_form.instance = technology
+        #         models = tech_adopter_form.save(commit=False)
+
+        #         for adopter_item in models:
+        #             # add relation to the status of technology
+        #             adopter_item.tech_adopter = tech_adopter
+
+        #             adopters.append(adopter_item)
+
+        # # add all at once when there is m2m relationships to be created
+        # num_adopters = len(adopters)
+        # if num_adopters > 0:
+        #     TechnologyAdopters.objects.bulk_create(adopters)
 
     def save_potential_adopters(self, technology, cleaned_potential_adopters):
         num_potential_adopters = len(cleaned_potential_adopters)
@@ -806,10 +861,10 @@ class TechnologiesCreate(BaseAdminView, HasPermissionsMixin, LoggedCreateView):
 
             # create m2m generator instance on the fly
             for generator in cleaned_generators:
-                generators.append(TechnologyGenerators(technology=technology, generator=generator))
+                generators.append(TechGenerators(technology=technology, generator=generator))
 
             # add it all at once
-            TechnologyGenerators.objects.bulk_create(generators)
+            TechGenerators.objects.bulk_create(generators)
 
     def save_technology_commodities(self, technology, cleaned_commodities):
         num_commodities = len(cleaned_commodities)
@@ -824,21 +879,20 @@ class TechnologiesCreate(BaseAdminView, HasPermissionsMixin, LoggedCreateView):
             # add it all at once
             TechnologyCommodities.objects.bulk_create(commodities)
 
-    def save_technology_industry_sector_isp(self, technology, cleaned_industry_sector_isps):
-        num_industry_sectors = len(cleaned_industry_sector_isps)
+    def save_technology_industry_sector_isp(self, technology, cleaned_industry_sector_isp):
+        num_industry_sector_isp = len(cleaned_industry_sector_isp)
 
-        if num_industry_sectors > 0:
-            industry_sector_isps = []
+        if num_industry_sector_isp > 0:
+            industry_sector_isp = []
 
             # create m2m industry sector instance on the fly
-            for industry_sector_isp in cleaned_industry_sector_isps:
-                industry_sector_isps.append(
-                  TechnologyIndustrySectorISPs(technology=technology, industry_sector_isp=industry_sector_isp)
+            for industry_sector_isp in cleaned_industry_sector_isp:
+                industry_sector_isp.append(
+                  TechnologyIndustrySectors(technology=technology, industry_sector_isp=industry_sector_isp)
                 )
 
             # add it all at once
-            TechnologyIndustrySectorISPs.objects.bulk_create(industry_sector_isps)
-
+            TechnologyIndustrySectorISPs.objects.bulk_create(industry_sector_isp)
 
     def save_technology_categories(self, technology, cleaned_categories):
         num_categories = len(cleaned_categories)
@@ -929,7 +983,7 @@ class TechnologiesCreate(BaseAdminView, HasPermissionsMixin, LoggedCreateView):
                         # create an instance of the protection type if it is trade secret
                         if is_trade_secret is True:
                             ip_protections.append(
-                              z(technology=technology, protection_type=protection_type)
+                              TechnologyProtectionTypes(technology=technology, protection_type=protection_type)
                             )
 
                 else:
@@ -984,6 +1038,7 @@ class TechnologiesUpdate(BaseAdminView, HasPermissionsMixin, LoggedUpdateView):
         context.update(self.setup_technology_readiness_formset_context(technology))
         context.update(self.setup_technology_funding_formset_context(technology))
         context.update(self.setup_technology_ip_protection_formset_context(technology))
+        context.update(self.setup_technology_assets_formset_context(technology))
 
         return context
 
@@ -1055,19 +1110,6 @@ class TechnologiesUpdate(BaseAdminView, HasPermissionsMixin, LoggedUpdateView):
 
             # if the request method is "POST" pass it to the form set.
             # use different form set when the funding type is extension / commercialization
-            if self.request.POST:
-                if snake_funding_type != 'extension_commercialization':
-                    context[context_key] = TechnologyFundingsFormSet(self.request.POST, **formset_kwargs)
-                else:
-                    context[context_key] = ExtensionAndCommercializationTechnologyFundingsFormSet(
-                      self.request.POST,
-                      **formset_kwargs
-                    )
-            else:
-                if snake_funding_type != 'extension_commercialization':
-                    context[context_key] = TechnologyFundingsFormSet(**formset_kwargs)
-                else:
-                    context[context_key] = ExtensionAndCommercializationTechnologyFundingsFormSet(**formset_kwargs)
 
         return context
 
@@ -1078,7 +1120,7 @@ class TechnologiesUpdate(BaseAdminView, HasPermissionsMixin, LoggedUpdateView):
 
         # create formsets for protection types
         protection_types = ProtectionTypes.objects.all()
-        tech_protections_related = TechnologyProtectionTypes.objects.filter(technology=technology) \
+        tech_protections_related = ProtectionTypes.objects.filter(technology=technology) \
             .select_related('protection_type', 'protection_type_meta')
 
         context['technology_protection_types'] = protection_types
@@ -1195,8 +1237,8 @@ class TechnologiesUpdate(BaseAdminView, HasPermissionsMixin, LoggedUpdateView):
                             self.save_technology_categories(technology, form.cleaned_data.get('categories'))
 
                         # save the industry sectors
-                        if 'industry_sectors' in form.changed_data:
-                            self.save_technology_industry_sectors(technology, form.cleaned_data.get('industry_sectors'))
+                        if 'industry_sector_isp' in form.changed_data:
+                            self.save_technology_industry_sector_isp(technology, form.cleaned_data.get('save_technology_industry_sector_isp'))
 
                         # save the commodities
                         if 'commodities' in form.changed_data:
@@ -1281,7 +1323,6 @@ class TechnologiesUpdate(BaseAdminView, HasPermissionsMixin, LoggedUpdateView):
 
         return valid
 
-    # TODO: implement a diffing logic so that only items that needs to be added/removed are persisted
     def save_technology_categories(self, technology, cleaned_categories):
         num_categories = len(cleaned_categories)
 
@@ -1298,26 +1339,24 @@ class TechnologiesUpdate(BaseAdminView, HasPermissionsMixin, LoggedUpdateView):
             # add it all at once
             TechnologyCategories.objects.bulk_create(categories)
 
-    # TODO: implement a diffing logic so that only items that needs to be added/removed are persisted
-    def save_technology_industry_sectors(self, technology, cleaned_industry_sectors):
-        num_industry_sectors = len(cleaned_industry_sectors)
+    def save_technology_industry_sector_isp(self, technology, cleaned_industry_sector_isp):
+        num_industry_sector_isp = len(cleaned_industry_sector_isp)
 
-        if num_industry_sectors > 0:
-            industry_sectors = []
+        if num_industry_sector_isp > 0:
+            industry_sector_isp = []
 
             # clear all existing relationships first
-            TechnologyIndustrySectors.objects.filter(technology=technology).delete()
+            TechnologyIndustrySectorsISP.objects.filter(technology=technology).delete()
 
             # create m2m industry sector instance on the fly
-            for industry_sector in cleaned_industry_sectors:
-                industry_sectors.append(
-                  TechnologyIndustrySectors(technology=technology, industry_sector=industry_sector)
+            for industry_sector in cleaned_industry_sector_isp:
+                industry_sector_isp.append(
+                  TechnologyIndustrySectorISPs(technology=technology, industry_sector=industry_sector_isp)
                 )
 
             # add it all at once
-            TechnologyIndustrySectors.objects.bulk_create(industry_sectors)
+            TechnologyIndustrySectorISPs.objects.bulk_create(industry_sector_isp)
 
-    # TODO: implement a diffing logic so that only items that needs to be added/removed are persisted
     def save_technology_commodities(self, technology, cleaned_commodities):
         num_commodities = len(cleaned_commodities)
 
@@ -1334,7 +1373,6 @@ class TechnologiesUpdate(BaseAdminView, HasPermissionsMixin, LoggedUpdateView):
             # add it all at once
             TechnologyCommodities.objects.bulk_create(commodities)
 
-    # TODO: implement a diffing logic so that only items that needs to be added/removed are persisted
     def save_technology_generators(self, technology, cleaned_generators):
         num_generators = len(cleaned_generators)
 
@@ -1351,7 +1389,6 @@ class TechnologiesUpdate(BaseAdminView, HasPermissionsMixin, LoggedUpdateView):
             # add it all at once
             TechGenerators.objects.bulk_create(generators)
 
-    # TODO: implement a diffing logic so that only items that needs to be added/removed are persisted
     def save_potential_adopters(self, technology, cleaned_potential_adopters):
         num_potential_adopters = len(cleaned_potential_adopters)
 
@@ -1369,8 +1406,7 @@ class TechnologiesUpdate(BaseAdminView, HasPermissionsMixin, LoggedUpdateView):
 
             # add it all at once
             TechnologyPotentialAdopters.objects.bulk_create(potential_adopters)
-
-    # TODO: implement a diffing logic so that only items that needs to be added/removed are persisted
+    
     def save_technology_owners(self, technology, cleaned_owners):
         num_owners = len(cleaned_owners)
 
@@ -1386,8 +1422,7 @@ class TechnologiesUpdate(BaseAdminView, HasPermissionsMixin, LoggedUpdateView):
 
             # add it all at once
             TechnologyOwners.objects.bulk_create(owners)
-
-    # TODO: implement a diffing logic so that only items that needs to be added/removed are persisted
+    
     def save_adopters(self, technology, cleaned_adopters):
         num_adopters = len(cleaned_adopters)
 
@@ -1405,8 +1440,7 @@ class TechnologiesUpdate(BaseAdminView, HasPermissionsMixin, LoggedUpdateView):
 
             # add it all at once
             TechnologyAdopters.objects.bulk_create(adopters)
-
-    # TODO: implement a diffing logic so that only items that needs to be added/removed are persisted
+    
     def save_status_of_readiness_data(self, technology, context):
         statuses = []
         update_statuses = []
@@ -1454,7 +1488,6 @@ class TechnologiesUpdate(BaseAdminView, HasPermissionsMixin, LoggedUpdateView):
         if num_statuses > 0:
             TechnologyStatuses.objects.bulk_create(statuses)
 
-    # TODO: implement a diffing logic so that only items that needs to be added/removed are persisted
     def save_technology_fundings(self, technology, context):
         technology_funding_implementors = []
 
@@ -1489,44 +1522,29 @@ class TechnologiesUpdate(BaseAdminView, HasPermissionsMixin, LoggedUpdateView):
                     if funding_type_item.id is None:
                         funding_type_item.funding_type = funding_type
 
-                    # process additional fields
-                    if snake_funding_type == 'extension_commercialization':
-                        json_serialized = json.dumps({
-                          'project_sites': clean_data_ref.get('project_sites')
-                        }).encode()
-
-                        # convert to a base64 encoded byte string to be saved to database
-                        b64_serialized = base64.b64encode(json_serialized)
-
-                        # covert the base64 encoded byte string to a regular string
-                        funding_type_item.properties = b64_serialized.decode()
-
                     # TODO: bulk create does not work since we do need the reference to an existing funding
                     #       which have its pk been already set so we create here in the loop. This can be a
                     #       bottleneck since we are invoking possible multiple insert statements.
                     funding_type_item.save()
 
                     # clear all existing relationships first
-                    TechnologyFundingImplementors.objects.filter(funding=funding_type_item).delete()
+                    FundingImplementors.objects.filter(funding=funding_type_item).delete()
 
                     # create the objects for the implementors
                     for implementing_agency in clean_data_ref.get('implementing_agencies'):
                         technology_funding_implementors.append(
-                          TechnologyFundingImplementors(funding=funding_type_item, implementor=implementing_agency)
+                          FundingImplementors(funding=funding_type_item, implementor=implementing_agency)
                         )
 
         num_del_technology_funding = len(del_technology_funding)
         if num_del_technology_funding > 0:
-            TechnologyFundings.objects.filter(pk__in=del_technology_funding, technology=technology).delete()
+            Fundings.objects.filter(pk__in=del_technology_funding, technology=technology).delete()
 
         # add all at once when there is m2m relationships to be created
         num_technology_funding_implementors = len(technology_funding_implementors)
         if num_technology_funding_implementors > 0:
-            TechnologyFundingImplementors.objects.bulk_create(technology_funding_implementors)
+            FundingImplementors.objects.bulk_create(technology_funding_implementors)
 
-    # TODO: implement a diffing logic so that only items that needs to be added/removed are persisted
-    # NOTE: since the model looped in this part can be added or revised according to the given document,
-    #       some part of this code might not work well and may resolve to the default values!
     def save_ip_protection_data(self, technology, context):
         ip_protections = []
         del_ip_protections = []
@@ -1545,13 +1563,13 @@ class TechnologiesUpdate(BaseAdminView, HasPermissionsMixin, LoggedUpdateView):
                         # create an instance of the protection type if it is trade secret
                         if is_trade_secret is True:
                             ip_protections.append(
-                              TechnologyProtectionTypes(technology=technology, protection_type=protection_type)
+                              ProtectionTypes(technology=technology, protection_type=protection_type)
                             )
 
                         # mark the reference of trade secret for deletion
                         if is_trade_secret is False:
                             del_ip_protections.append(
-                              TechnologyProtectionTypes.objects.filter(
+                              ProtectionTypes.objects.filter(
                                 technology=technology,
                                 protection_type=protection_type
                               )[0].id
@@ -1572,7 +1590,7 @@ class TechnologiesUpdate(BaseAdminView, HasPermissionsMixin, LoggedUpdateView):
                            meta_item.status is None)
                         ):
                             del_ip_protections.append(
-                              TechnologyProtectionTypes.objects.filter(
+                              ProtectionTypes.objects.filter(
                                 technology=technology,
                                 protection_type=protection_type
                               )[0].id
@@ -1588,7 +1606,7 @@ class TechnologiesUpdate(BaseAdminView, HasPermissionsMixin, LoggedUpdateView):
                         meta_item.save()
 
                         # check if the meta is already associated, if not create an association
-                        meta_queryset = TechnologyProtectionTypes.objects.filter(
+                        meta_queryset = ProtectionTypes.objects.filter(
                           technology=technology,
                           protection_type=protection_type,
                           protection_type_meta=meta_item
@@ -1596,7 +1614,7 @@ class TechnologiesUpdate(BaseAdminView, HasPermissionsMixin, LoggedUpdateView):
                         num_result_meta_query_set = len(meta_queryset)
                         if num_result_meta_query_set == 0:
                             ip_protections.append(
-                              TechnologyProtectionTypes(
+                              ProtectionTypes(
                                 technology=technology,
                                 protection_type=protection_type,
                                 protection_type_meta=meta_item
@@ -1606,16 +1624,16 @@ class TechnologiesUpdate(BaseAdminView, HasPermissionsMixin, LoggedUpdateView):
         # del_ip_protections = []
         num_del_meta_protections = len(del_meta_protections)
         if num_del_meta_protections > 0:
-            TechnologyProtectionTypesMetadata.objects.filter(pk__in=del_meta_protections).delete()
+            TechProtectionTypesMetadata.objects.filter(pk__in=del_meta_protections).delete()
 
         num_del_ip_protections = len(del_ip_protections)
         if num_del_ip_protections > 0:
-            TechnologyProtectionTypes.objects.filter(pk__in=del_ip_protections).delete()
+            ProtectionTypes.objects.filter(pk__in=del_ip_protections).delete()
 
         # add all at once when there is m2m relationships to be created
         num_ip_protections = len(ip_protections)
         if num_ip_protections > 0:
-            TechnologyProtectionTypes.objects.bulk_create(ip_protections)
+            ProtectionTypes.objects.bulk_create(ip_protections)
 
 class TechnologiesDelete(BaseAdminView, HasPermissionsMixin, LoggedDeleteView):
     required_permission = 'remove_technologies'
@@ -1652,9 +1670,6 @@ class TechnologiesDelete(BaseAdminView, HasPermissionsMixin, LoggedDeleteView):
                     # delete adopters associated to the technology
                     TechnologyAdopters.objects.filter(technology=self.object).delete()
 
-                    # delete the associated assets to the technology
-                    TechnologyAssets.objects.filter(technology=self.object).delete()
-
                     # delete statuses associated to the technology
                     TechnologyStatuses.objects.filter(technology=self.object).delete()
 
@@ -1687,7 +1702,6 @@ class TechnologiesDelete(BaseAdminView, HasPermissionsMixin, LoggedDeleteView):
             return HttpResponseBadRequest(re)
 
         return HttpResponseRedirect(success_url)
-
 
 
 # ADD: TechnologiesDetails

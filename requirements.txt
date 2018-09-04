@@ -6,6 +6,7 @@ django-environ==0.4.4
 django-role-permissions==2.1.0
 djangorestframework==3.7.3
 djangorestframework-jwt==1.11.0
+djangorestframework-datatables==3.7.3
 funcy==1.10
 gunicorn==19.7.1
 mysqlclient==1.3.12
