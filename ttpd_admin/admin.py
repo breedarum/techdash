@@ -10,6 +10,9 @@ from django.contrib import admin
 # from django.contrib.auth.admin import GroupAdmin, UserAdmin
 from ttpd_admin import urls
 from .forms import AdminAuthenticationForm
+from .views import (
+  TechnologiesList
+)
 
 def wrap_perms(admin_site, view, cacheable=False):
     def wrapper(*args, **kwargs):
@@ -22,7 +25,7 @@ class TtpdAdmin(admin.AdminSite):
     site_header = 'TTPD'
     site_title = 'TTPD Administration'
     index_title = 'TTPD Administration'
-    index_template = 'ttpd_admin/index.html'
+    index_template = 'ttpd_admin/technologies/index.html'
     login_form = AdminAuthenticationForm
     login_template = 'ttpd_admin/login.html'
     logout_template = 'ttpd_admin/logout.html'
@@ -39,7 +42,8 @@ class TtpdAdmin(admin.AdminSite):
 
         # Admin-site-wide views.
         urlpatterns = [
-          url(r'^$', wrap_perms(self, self.index), name='index'),
+          url(r'^$', TechnologiesList.as_view(), name='index'),
+          # url(r'^$', TechnologiesList.as_view(), name='technologies_list'),
           url(r'^login/$', self.login, name='login'),
           url(r'^logout/$', wrap_perms(self, self.logout), name='logout'),
           url(r'^password_change/$', wrap_perms(self, self.password_change, cacheable=True), name='password_change'),

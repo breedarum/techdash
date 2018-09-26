@@ -7,23 +7,22 @@
 from rolepermissions.roles import assign_role
 from rest_framework import serializers
 from ttpd_admin.models import (
-  Commodities,
+  AdopterTypes,
+  Adopters,
+  Agencies,
+  Fundings,
+  FundingTypes,
+  ISPs,
   Industries,
-  ProtectionLevels,
+  ProtectionTypes,
   TechCategories,
   Generators,
   TechStatus,
+  TechnologyStatuses,
   Technologies,
+  Fundings,
   User
 )
-
-class CommoditiesSerializer(serializers.HyperlinkedModelSerializer):
-    url = serializers.HyperlinkedIdentityField(view_name='api_commodities_detail')
-
-    class Meta:
-        model = Commodities
-        fields = '__all__'
-
 class IndustriesSerializer(serializers.HyperlinkedModelSerializer):
     url = serializers.HyperlinkedIdentityField(view_name='api_industries_detail')
 
@@ -31,12 +30,23 @@ class IndustriesSerializer(serializers.HyperlinkedModelSerializer):
         model = Industries
         fields = '__all__'
 
-class ProtectionLevelsSerializer(serializers.HyperlinkedModelSerializer):
-    url = serializers.HyperlinkedIdentityField(view_name='api_protection_levels_detail')
+class ISPsSerializer(serializers.HyperlinkedModelSerializer):
+    sector = serializers.ReadOnlyField(source='parent.name')
+    industry = serializers.ReadOnlyField(source='parent.parent.name')
 
     class Meta:
-        model = ProtectionLevels
-        fields = '__all__'
+        model = ISPs
+        fields = ['name', 'sector', 'industry']
+
+class ProtectionTypesSerializer(serializers.HyperlinkedModelSerializer):
+    application_number = serializers.ReadOnlyField(source='protection_type_meta.application_number')
+    meta_serial_number = serializers.ReadOnlyField(source='protection_type_meta.meta_serial_number')
+    date_of_filing = serializers.ReadOnlyField(source='protection_type_meta.date_of_filing')
+    status = serializers.ReadOnlyField(source='protection_type_meta.name')
+
+    class Meta:
+        model = ProtectionTypes
+        fields = ['protection_type', 'application_number', 'meta_serial_number', 'date_of_filing', 'status']
 
 class TechnologyCategoriesSerializer(serializers.HyperlinkedModelSerializer):
     url = serializers.HyperlinkedIdentityField(view_name='api_technology_categories_detail')
@@ -46,12 +56,49 @@ class TechnologyCategoriesSerializer(serializers.HyperlinkedModelSerializer):
         model = TechCategories
         fields = ['id', 'url', 'name', 'parent']
 
+class AdoptersSerializer(serializers.HyperlinkedModelSerializer):
+    adopter_type = serializers.ReadOnlyField(source='adopter_type.name')
+
+    class Meta:
+        model = Adopters
+        fields = ['id', 'name', 'address', 'phone_number', 'fax_number', 'email_address', 'adopter_type']
+
+class AgenciesSerializer(serializers.HyperlinkedModelSerializer):
+    agency_type = serializers.ReadOnlyField(source='agency_type.name')
+
+    class Meta:
+        model = Agencies
+        fields = ['id', 'name', 'address', 'phone_number', 'fax_number', 'agency_type', 'private_flag']
+
+class FundingsSerializer(serializers.HyperlinkedModelSerializer):
+    funding_type = serializers.ReadOnlyField(source='funding_type.name')
+    donor = serializers.ReadOnlyField(source='donor.name')
+    implementing_agencies = serializers.ReadOnlyField(source='implementing_agencies.name')
+
+    class Meta:
+        model = Fundings
+        fields = ['id', 
+                  'funding_type',  
+                  'investment_amount',  
+                  'duration_start',  
+                  'duration_end',  
+                  'donor',
+                  'implementing_agencies']
+
 class GeneratorsSerializer(serializers.HyperlinkedModelSerializer):
     agency = serializers.ReadOnlyField(source='agency.name')
+    address = serializers.ReadOnlyField(source='agency.address')
 
     class Meta:
         model = Generators
-        fields = ['id', 'title', 'first_name', 'last_name', 'availability', 'agency']
+        fields = ['id', 
+                  'title', 
+                  'first_name', 
+                  'last_name', 
+                  'expertise', 
+                  'availability', 
+                  'agency', 
+                  'address']
 
 class TechStatusSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
@@ -67,14 +114,14 @@ class TechStatusSerializer(serializers.HyperlinkedModelSerializer):
           'year_complied': status_metadata.year_complied
         }
 
-class TechnologiesSerializer(serializers.HyperlinkedModelSerializer):
+class TechnologiesSerializerFirstLevel(serializers.HyperlinkedModelSerializer):
     url = serializers.HyperlinkedIdentityField(view_name='api_technologies_detail')
     protection_level = serializers.ReadOnlyField(source='protection_level.name')
     region = serializers.ReadOnlyField(source='region.region_normalized_canonical')
     categories = serializers.SlugRelatedField(many=True, read_only=True, slug_field='name')
-    commodities = serializers.SlugRelatedField(many=True, read_only=True, slug_field='name')
-    generators = GeneratorsSerializer(many=True, read_only=True)
-    industry_sector_isps = serializers.SlugRelatedField(many=True, read_only=True, slug_field='name')
+    generators =serializers.SlugRelatedField(many=True, read_only=True, slug_field='title')
+    industries = IndustriesSerializer(many=True, read_only=True)
+    industry_sector_isps = ISPsSerializer(many=True, read_only=True)
     owners = serializers.SlugRelatedField(many=True, read_only=True, slug_field='name')
     statuses = TechStatusSerializer(many=True, read_only=True)
 
@@ -87,13 +134,93 @@ class TechnologiesSerializer(serializers.HyperlinkedModelSerializer):
           'year',
           'description',
           'protection_level',
+          'industries',
           'region',
           'categories',
-          'commodities',
           'industry_sector_isps',
           'generators',
           'owners',
           'statuses'
+        ]
+
+class TechnologiesSerializerSecondLevel(serializers.HyperlinkedModelSerializer):
+    url = serializers.HyperlinkedIdentityField(view_name='api_technologies_detail')
+    protection_level = serializers.ReadOnlyField(source='protection_level.name')
+    region = serializers.ReadOnlyField(source='region.region_normalized_canonical')
+    categories = serializers.SlugRelatedField(many=True, read_only=True, slug_field='name')
+    generators = GeneratorsSerializer(many=True, read_only=True)
+    industry_sector_isps = ISPsSerializer(many=True, read_only=True)
+    owners = AgenciesSerializer(many=True, read_only=True)
+    statuses = TechStatusSerializer(many=True, read_only=True)
+   # adopters = serializers.SlugRelatedField(many=True, read_only=True, slug_field='adopter_type')
+    
+    class Meta:
+        model = Technologies
+        fields = [
+          'id',
+          'url',
+          'name',
+          'year',
+          'description',
+          'protection_level',
+          'region',
+          'categories',
+          'industry_sector_isps',
+          'generators',
+          'owners',
+          'statuses',
+    #      'adopters'
+        ]
+
+class TechnologiesSerializerThirdLevel(serializers.HyperlinkedModelSerializer):
+    url = serializers.HyperlinkedIdentityField(view_name='api_technologies_detail')
+    protection_level = serializers.ReadOnlyField(source='protection_level.name')
+    region = serializers.ReadOnlyField(source='region.region_normalized_canonical')
+    categories = serializers.SlugRelatedField(many=True, read_only=True, slug_field='name')
+    generators = GeneratorsSerializer(many=True, read_only=True)
+    industry_sector_isps = ISPsSerializer(many=True, read_only=True)
+    owners = AgenciesSerializer(many=True, read_only=True)
+    statuses = TechStatusSerializer(many=True, read_only=True)
+    adopters = AdoptersSerializer(many=True, read_only=True)
+    fundings = FundingsSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Technologies
+        fields = [
+          'id',
+          'url',
+          'name',
+          'year',
+          'description',
+          'protection_level',
+          'region',
+          'categories',
+          'industry_sector_isps',
+          'generators',
+          'owners',
+          'statuses',
+          'adopters',
+          'fundings',
+        ]
+
+class TechnologiesSearchSerializer(serializers.HyperlinkedModelSerializer):
+    url = serializers.HyperlinkedIdentityField(view_name='api_technologies_detail')
+    title = serializers.ReadOnlyField(source='name')
+    region = serializers.ReadOnlyField(source='region.region_normalized_canonical')
+    categories = serializers.SlugRelatedField(many=True, read_only=True, slug_field='name')
+    industry_sector_isps = serializers.SlugRelatedField(many=True, read_only=True, slug_field='name')
+    
+    class Meta:
+        model = Technologies
+        fields = [
+          'id',
+          'url',
+          'title',
+          'year',
+          'description',
+          'region',
+          'categories',
+          'industry_sector_isps',
         ]
 
 class UsersSerializer(serializers.ModelSerializer):

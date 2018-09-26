@@ -9,14 +9,20 @@ from django.views import View
 from django.http import HttpResponse
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
-from ttpd_admin.models import Commodities, Industries, User, ProtectionLevels, TechCategories, Technologies
+from rolepermissions.roles import get_user_roles
+from rolepermissions.checkers import has_role, has_permission
+from rolepermissions.mixins import HasPermissionsMixin, HasRoleMixin
+from ttpd.roles import *
+from ttpd_admin.models import Industries, User, ProtectionLevels, TechCategories, Technologies, TechnologyStatuses
 from .paginations import ConditionalPagination, DefaultPagination
 from .serializers import (
-  CommoditiesSerializer,
   IndustriesSerializer,
-  ProtectionLevelsSerializer,
+  ProtectionTypesSerializer,
   TechnologyCategoriesSerializer,
-  TechnologiesSerializer,
+  TechnologiesSerializerFirstLevel,
+  TechnologiesSerializerSecondLevel,
+  TechnologiesSerializerThirdLevel,
+  TechnologiesSearchSerializer,
   UsersSerializer
 )
 
@@ -29,19 +35,6 @@ def blank_index(request):
     return HttpResponse(json.dumps(data), content_type='application/json')
     #return render(request, 'templates/commodities.html')
 
-class CommoditiesList(generics.ListAPIView, ConditionalPagination):
-    queryset = Commodities.objects.all().order_by('name')
-    serializer_class = CommoditiesSerializer
-    pagination_class = DefaultPagination
-
-    def list(self, request):
-        serializer = self.serializer_class(self.queryset, many=True)
-        return Response(serializer.data)
-
-class CommoditiesDetail(generics.RetrieveAPIView):
-    queryset = Commodities.objects.all()
-    serializer_class = CommoditiesSerializer
-
 class IndustriesList(generics.ListAPIView, ConditionalPagination):
     queryset = Industries.objects.all()
     serializer_class = IndustriesSerializer
@@ -51,14 +44,14 @@ class IndustriesDetail(generics.RetrieveAPIView):
     queryset = Industries.objects.all()
     serializer_class = IndustriesSerializer
 
+class ISPsDetail(generics.RetrieveAPIView):
+    queryset = Industries.objects.all()
+    serializer_class = IndustriesSerializer
+
 class ProtectionLevelsList(generics.ListAPIView, ConditionalPagination):
     queryset = ProtectionLevels.objects.all()
-    serializer_class = ProtectionLevelsSerializer
+    serializer_class = ProtectionTypesSerializer
     pagination_class = DefaultPagination
-
-class ProtectionLevelsDetail(generics.RetrieveAPIView):
-    queryset = ProtectionLevels.objects.all()
-    serializer_class = ProtectionLevelsSerializer
 
 class TechnologyCategoriesList(generics.ListAPIView, ConditionalPagination):
     queryset = TechCategories.objects.all()
@@ -70,11 +63,30 @@ class TechnologyCategoriesDetail(generics.RetrieveAPIView):
     serializer_class = TechnologyCategoriesSerializer
 
 class TechnologiesList(generics.ListAPIView, ConditionalPagination):
-    serializer_class = TechnologiesSerializer
     pagination_class = DefaultPagination
-    allowed_filters = ['year', 'industry_sector_isps', 'commodities', 'categories', 'protection_level']
+    allowed_filters = [ 'year', 
+                        'industry_sector_isps', 
+                        'categories', 
+                        'protection_level', 
+                        'adopters', 
+                        'generators', 
+                        'owners', 
+                        'statuses', 
+                        'fundings',
+                        'protection_types' ]
+
+
+    def get_serializer_class(self):
+
+        if self.request.user.is_superuser:
+             return TechnologiesSerializerThirdLevel
+        if self.request.user.is_staff:
+             return TechnologiesSerializerSecondLevel
+
+        return TechnologiesSerializerFirstLevel
 
     def get_queryset(self):
+
         queryset = Technologies.objects.all()
         sort_request = self.request.query_params.get('sort', None)
 
@@ -89,17 +101,77 @@ class TechnologiesList(generics.ListAPIView, ConditionalPagination):
             if allowed_filter == 'year':
                 queryset = queryset.filter(year=filter_param)
 
-            if allowed_filter == 'industry_sectors':
-                queryset = queryset.filter(industry_sectors__name__in=filter_param.split(','))
-
-            if allowed_filter == 'commodities':
-                queryset = queryset.filter(commodities__name__in=filter_param.split(','))
+            if allowed_filter == 'industry_sector_isps':
+                queryset = queryset.filter(industry_sector_isps__name__in=filter_param.split(','))
 
             if allowed_filter == 'categories':
                 queryset = queryset.filter(categories__name__in=filter_param.split(','))
 
             if allowed_filter == 'protection_level':
                 queryset = queryset.filter(protection_level__name=filter_param)
+
+            if allowed_filter == 'adopters':
+                queryset = queryset.filter(adopter__name=filter_param)
+
+            if allowed_filter == 'generators':
+                queryset = queryset.filter(generators__title=filter_param)
+
+            if allowed_filter == 'owners':
+                queryset = queryset.filter(owners__name=filter_param)
+
+            if allowed_filter == 'statuses':
+                queryset = queryset.filter(statuses__name=filter_param)
+
+            if allowed_filter == 'fundings':
+                queryset = queryset.filter(fundings__name=filter_param)
+
+            if allowed_filter == 'protection_types':
+                queryset = queryset.filter(protection_types__name=filter_param)
+
+        # if sort query parameter is present, perform sorting by issuing the correct SQL / Django Queryset
+        if sort_request is not None:
+            sort_params = sort_request.split(',')
+
+            # TODO: refactor this condition! inefficient checking of allowed sort params!
+            if 'name' in sort_params or 'year' in sort_params:
+                queryset = queryset.order_by(*sort_params)
+
+        return queryset
+
+class TechnologiesSearch(generics.ListAPIView, ConditionalPagination):
+    pagination_class = DefaultPagination
+    serializer_class = TechnologiesSearchSerializer
+    allowed_filters = [ 'id',
+                        'url',
+                        'title',
+                        'year',
+                        'description',
+                        'region',
+                        'categories',
+                        'industry_sector_isps'
+                        ]
+
+    def get_queryset(self):
+
+        queryset = Technologies.objects.all()
+        sort_request = self.request.query_params.get('sort', None)
+
+        # loop through all of the allowed filters and look for it in the request query parameters
+        # if present, apply the filter to the queryset
+        for allowed_filter in self.allowed_filters:
+            filter_param = self.request.query_params.get(allowed_filter, None)
+
+            if filter_param is None:
+                continue
+
+            if allowed_filter == 'year':
+                queryset = queryset.filter(year=filter_param)
+
+            if allowed_filter == 'industry_sector_isps':
+                queryset = queryset.filter(industry_sector_isps__name__in=filter_param.split(','))
+
+            if allowed_filter == 'categories':
+                queryset = queryset.filter(categories__name__in=filter_param.split(','))
 
         # if sort query parameter is present, perform sorting by issuing the correct SQL / Django Queryset
         if sort_request is not None:
@@ -113,7 +185,15 @@ class TechnologiesList(generics.ListAPIView, ConditionalPagination):
 
 class TechnologiesDetail(generics.RetrieveAPIView):
     queryset = Technologies.objects.all()
-    serializer_class = TechnologiesSerializer
+
+    def get_serializer_class(self):
+
+        if self.request.user.is_superuser:
+             return TechnologiesSerializerThirdLevel
+        if self.request.user.is_staff:
+             return TechnologiesSerializerSecondLevel
+
+        return TechnologiesSerializerFirstLevel
 
 # CBV for returning list of years that are encoded with the technologies
 class TechnologYearsList(View):

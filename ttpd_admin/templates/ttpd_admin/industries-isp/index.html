@@ -18,8 +18,7 @@
                 <table class="table">
                     <thead>
                         <tr>
-                            <th scope="col">Industry</th>
-                            <th scope="col">Sector</th>
+                            <th scope="col">Industry - Sector</th>
                             <th scope="col">ISP</th>
                             <th scope="col">Special Commodity</th>
                             <th scope="col">&nbsp;</th>
@@ -28,9 +27,6 @@
                     <tbody>
                         {% for isps in object_list %}
                         <tr>
-                            <td scope="row">
-                                <a href="{{ isps.get_absolute_url }}">{{ isps.parent.parent }}</a>
-                            </td>
                             <td>
                                 <a href="{{ isps.get_absolute_url }}">{{ isps.parent }}
                             </td>

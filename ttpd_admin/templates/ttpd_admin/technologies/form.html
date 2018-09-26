@@ -125,6 +125,28 @@
                                 Adopters
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link"
+                                id="assets-tab"
+                                data-toggle="tab"
+                                href="#assets"
+                                role="tab"
+                                aria-controls="assets"
+                                aria-selected="true">
+                                Assets
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link"
+                                id="full-description-tab"
+                                data-toggle="tab"
+                                href="#full-description"
+                                role="tab"
+                                aria-controls="full-description"
+                                aria-selected="true">
+                                Full Description
+                            </a>
+                        </li>
                     </ul>
                 </div>
 
@@ -164,9 +186,19 @@
                         </div>
                         <!-- [Adopters] ::end -->
 
+                        <!-- [Assets] ::start -->
+                        <div class="tab-pane fade" id="assets" role="tabpanel" aria-labelledby="assets-tab">
+                            {% include "./form/assets.html" %}
+                        </div>
+                        <!-- [Assets] ::end -->
+
+                        <!-- [Full Description] ::start -->
+                        <div class="tab-pane fade" id="full-description" role="tabpanel" aria-labelledby="full-description-tab">
+                            {% include "./form/full-description.html" %}
+                        </div>
+                        <!-- [Full Description] ::end -->
                     </div>
                 </div>
-
                 <div class="card-footer">
                     <button type="submit" class="btn btn-sm btn-primary"><i class="fa fa-dot-circle-o"></i> Submit</button>
                     <button type="reset" class="btn btn-sm btn-danger"><i class="fa fa-ban"></i> Reset</button>

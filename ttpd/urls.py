@@ -23,8 +23,7 @@ from ttpd_api import views
 
 
 router = routers.DefaultRouter()
-router.register(r'commodities', views.CommoditiesList)
-router.register(r'industries', views.CommoditiesList)
+router.register(r'industries', views.IndustriesList)
 
 urlpatterns = [
   url(r'^admin/', admin.site.urls),

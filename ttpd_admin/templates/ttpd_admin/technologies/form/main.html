@@ -31,23 +31,13 @@
 </div>
 
 <div class="form-group">
-    {{ form.industry_sector_isps.label_tag }}
+    Industry - Sector - ISP:
 
     <!-- FIX: show industries and sectors along with the isp -->
     {{ form.industry_sector_isps }}
 
     {% if form.industry_sector_isps.errors %}
     {% element_error form 'industry_sector_isps' %}
-    {% endif %}
-</div>
-
-<div class="form-group">
-    {{ form.commodities.label_tag }}
-
-    {{ form.commodities }}
-
-    {% if form.commodities.errors %}
-    {% element_error form 'commodities' %}
     {% endif %}
 </div>
 
@@ -78,6 +68,16 @@
 
     {% if form.description.errors %}
     {% element_error form 'description' %}
+    {% endif %}
+</div>
+
+<div class="form-group">
+    {{ form.est_ownership_cost.label_tag }}
+
+    {{ form.est_ownership_cost }}
+
+    {% if form.est_ownership_cost.errors %}
+    {% element_error form 'est_ownership_cost' %}
     {% endif %}
 </div>
 

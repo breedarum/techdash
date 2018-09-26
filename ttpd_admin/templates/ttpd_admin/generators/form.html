@@ -71,6 +71,22 @@
                             {% endfor %}
                         {% endif %}
                     </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.expertise.id_for_label }}">{{ form.expertise.label }}</label>
+
+                        <input type="text" class="form-control {% if form.expertise.errors %}is-invalid{% endif %}" 
+                            id="{{ form.expertise.id_for_label }}" 
+                            name="{{ form.expertise.html_name }}"
+                            {% if form.instance.id and form.instance.expertise is not None %}value="{{ form.instance.expertise }}"{% endif %} />
+
+                        {% if form.expertise.errors %}
+                            {% for error in form.expertise.errors %}
+                            <div class="invalid-feedback">{{ error | escape }}</div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+
                     <div class="form-group">
                         <label for="{{ form.availability.id_for_label }}">{{ form.availability.label }}</label>
 

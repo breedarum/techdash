@@ -23,6 +23,7 @@
                             <th scope="col">Name</th>
                             <th scope="col">Availability</th>
                             <th scope="col">Agency</th>
+                            <th scope="col">Field of Expertise</th>
                             <th scope="col">&nbsp;</th>
                         </tr>
                     </thead>
@@ -42,6 +43,9 @@
                             </td>
                             <td scope="row">
                                 <a href="{{ generators.get_absolute_url }}">{{ generators.agency }}</a>
+                            </td>
+                            <td scope="row">
+                                <a href="{{ generators.get_absolute_url }}">{{ generators.expertise }}</a>
                             </td>
                             <td class="w-25">
                                 <a href="{{ generators.get_absolute_url }}delete" class="btn btn-sm btn-danger pull-right">

@@ -12,10 +12,12 @@ from django.contrib.auth import password_validation
 from .models import (
   Technologies,
   Fundings,
+  TechnologyAssets,
   TechnologyAdopters,
   TechnologyStatuses,  
   TechProtectionTypesMetadata, 
-  TechnologyProtectionStatus,        
+  TechnologyProtectionStatus,       
+  TechnologyFullDescription, 
   TechStatus,     
   User
 )
@@ -77,10 +79,10 @@ class TechnologyForm(GenericBaseModelForm):
           'region',
           'categories',
           'industry_sector_isps',
-          'commodities',
           'protection_level',
           'year',
           'description',
+          'est_ownership_cost',
 
           'owners',
           'generators',
@@ -92,7 +94,8 @@ class TechnologyForm(GenericBaseModelForm):
         labels = {
           'industry_sector_isp': 'Industry-Sectors-ISP',
           'protection_level': 'Protection Level',
-          'potential_adopters': 'Potential Adopter'
+          'potential_adopters': 'Potential Adopter',
+          'est_ownership_cost': 'Estimated Ownership Cost (Php)'
         }
 
         error_messages = {
@@ -107,9 +110,6 @@ class TechnologyForm(GenericBaseModelForm):
           },
           'industry_sector_isp': {
             'required': 'Industry-Sectors-ISP is required'
-          },
-          'commodities': {
-            'required': 'Commodities is required'
           },
           'protection_level': {
             'required': 'Protection Level is required'
@@ -322,6 +322,70 @@ class TradeSecretIpProtectionForm(forms.Form):
       })
     )
 
+# NOTE: Extending the custom ModelForm class breaks the inline formset delete function
+class TechnologyAssetsForm(forms.ModelForm):
+    """
+    Form for adding assets
+    """
+
+    class Meta:
+        model = TechnologyAssets
+        fields = [
+          'path',
+          'description'
+        ]
+
+        error_messages = {
+          'path': {
+            'required': 'Path is required'
+          }
+        }
+
+    def clean(self):
+        # call the parent clean method
+        cleaned_data = super(TechnologyAssetsForm, self).clean()
+
+        path = cleaned_data.get('path')
+        description = cleaned_data.get('description')
+
+        # check whether the description is filled up and the there is no attached file
+        # into the file upload field. If it is, we mark the form as invalid
+        if not path and description:
+            self.add_error('path', f"Please attach a file to be uploaded.")
+
+        return cleaned_data
+
+# NOTE: Extending the custom ModelForm class breaks the inline formset delete function
+class TechnologyFullDescriptionForm(forms.ModelForm):
+    """
+    Form for adding asset description
+    """
+    class Meta:
+        model = TechnologyFullDescription
+        fields = [
+          'path',
+        ]
+
+        error_messages = {
+          'path': {
+            'required': 'Path is required'
+          }
+        }
+
+    def clean(self):
+        # call the parent clean method
+        cleaned_data = super(TechnologyFullDescriptionForm, self).clean()
+
+        path = cleaned_data.get('path')
+        description = cleaned_data.get('description')
+
+        # check whether the description is filled up and the there is no attached file
+        # into the file upload field. If it is, we mark the form as invalid
+        if not path and description:
+            self.add_error('path', f"Please attach a file to be uploaded.")
+
+        return cleaned_data
+
 class UsersForm(GenericBaseModelForm):
     password1 = forms.CharField(
       label='Password',
@@ -521,6 +585,25 @@ TechnologyIpProtectionMetadataFormSet = forms.modelformset_factory(
   can_delete=False
 )
 
+TechnologyAssetsFormSet = forms.inlineformset_factory(
+  Technologies,
+  TechnologyAssets,
+  form=TechnologyAssetsForm,
+  fk_name='technology',
+  extra=0,
+  min_num=0,
+  max_num=5
+)
+
+TechnologyFullDescriptionFormSet = forms.inlineformset_factory(
+  Technologies,
+  TechnologyFullDescription,
+  form=TechnologyFullDescriptionForm,
+  fk_name='technology',
+  extra=0,
+  min_num=0,
+  max_num=5
+)
 
 # ==================================================================
 # [Formsets] ::end

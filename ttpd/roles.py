@@ -114,7 +114,9 @@ class Staff(AbstractUserRole):
       'list_technologies',
       'update_technologies',
       'remove_technologies',
-      'view_technologies'
+      'view_technologies',
+      'profile_users',
+      'update_users',
     ])
 
 class LevelOneUser(AbstractUserRole):

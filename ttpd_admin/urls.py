@@ -7,10 +7,6 @@
 from django.conf.urls import url
 from .views import (
   ActivityLogsList,
-  CommoditiesCreate,
-  CommoditiesDelete,
-  CommoditiesList,
-  CommoditiesUpdate,
   IndustriesCreate,
   IndustriesDelete,
   IndustriesList,
@@ -61,9 +57,11 @@ from .views import (
   TechCategoriesList,
   TechCategoriesUpdate,
   TechnologiesCreate,
+  TechnologiesDetails,
   TechnologiesDelete,
   TechnologiesList,
   TechnologiesUpdate,
+  UsersProfile,
   UsersList,
   UsersCreate,
   UsersDelete,
@@ -73,19 +71,6 @@ from .views import (
 
 urlpatterns = [
   url(r'^activity-logs/$', ActivityLogsList.as_view(), name='activity_logs_list'),
-
-  url(r'^data-management/commodities/$', 
-      CommoditiesList.as_view(), 
-      name='commodities_list'),
-  url(r'^data-management/commodities/add/$',
-     CommoditiesCreate.as_view(), 
-      name='commodities_create'),
-  url(r'^data-management/commodities/(?P<pk>\d+)/$', 
-      CommoditiesUpdate.as_view(), 
-      name='commodities_update'),
-  url(r'^data-management/commodities/(?P<pk>\d+)/delete$', 
-      CommoditiesDelete.as_view(), 
-      name='commodities_delete'),
 
   url(r'^data-management/industries/$',
       IndustriesList.as_view(),
@@ -243,7 +228,11 @@ urlpatterns = [
       TechCategoriesDelete.as_view(),
       name='tech_categories_delete'),
 
-  url(r'^technologies/$',
+  # url(r'^technologies/$',
+  #     TechnologiesList.as_view(),
+  #     name='technologies_list'),
+
+  url(r'^$',
       TechnologiesList.as_view(),
       name='technologies_list'),
   url(r'^technologies/add/$',
@@ -256,12 +245,15 @@ urlpatterns = [
       TechnologiesDelete.as_view(),
       name='technologies_delete'),
   url(r'^technologies/(?P<pk>\d+)$',
-      GeneratorsUpdate.as_view(),
+      TechnologiesDetails.as_view(),
       name='technologies_details'),
 
   url(r'^users/$',
       UsersList.as_view(),
       name='users_list'),
+  url(r'^profile/(?P<pk>\d+)/$',
+      UsersProfile.as_view(),
+      name='users_profile'),
   url(r'^users/add/$',
       UsersCreate.as_view(),
       name='users_create'),

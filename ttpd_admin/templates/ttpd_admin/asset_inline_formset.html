@@ -1,0 +1,99 @@
+{% load element_error %}
+
+{{ formset.management_form }}
+
+<!-- [Formset Template] ::start -->
+<div class="inline-form-wrapper inline-form-template d-none" data-form-el-prefix="{{ formset.prefix }}">
+    <div class="form-group">
+        {{ formset.empty_form.path.label_tag }}
+
+        <label class="custom-file d-block{% if formset.empty_form.path.errors %} is-invalid{% endif %}">
+            <input type="file" class="custom-file-input"
+                name="{{ formset.empty_form.path.html_name }}"
+                id="{{ formset.empty_form.path.id_for_label }}" />
+
+            <span class="custom-file-control" data-selected-file="Choose file..."></span>
+        </label>
+    </div>
+     <div class="form-group">
+        {{ formset.empty_form.description.label_tag }}
+
+        <textarea name="{{ formset.empty_form.description.html_name }}"
+            class="form-control"
+            id="{{ formset.empty_form.description.id_for_label }}"
+            cols="40"
+            rows="10">
+        </textarea>
+    </div>
+
+    <div class="form-group mb-0">
+        <label class="custom-control custom-checkbox mb-0"
+            for="{{ formset.empty_form.DELETE.id_for_label }}">
+
+            <input type="checkbox" class="custom-control-input custom-control-input--delete"
+                name="{{ formset.empty_form.DELETE.html_name }}"
+                id="{{ formset.empty_form.DELETE.id_for_label }}" />
+
+            <span class="custom-control-indicator"></span>
+            <span class="custom-control-description">
+                {{ formset.empty_form.DELETE.label | escape }}
+            </span>
+        </label>
+    </div>
+</div>
+<!-- [Formset Template] ::end -->
+
+{% for inline_form in formset.forms %}
+<div class="inline-form-wrapper{% if not forloop.last %} mb-3{% endif %}">
+    {% for hidden in inline_form.hidden_fields %}
+    {{ hidden }}
+    {% endfor %}
+
+    <div class="form-group">
+        {{ inline_form.path.label_tag }}
+
+        <label class="custom-file d-block{% if inline_form.path.errors %} is-invalid{% endif %}">
+            <input type="file" class="custom-file-input"
+                name="{{ inline_form.path.html_name }}"
+                id="{{ inline_form.path.id_for_label }}" />
+
+            <span class="custom-file-control" data-selected-file="Choose file..."></span>
+        </label>
+
+        {% if inline_form.path.errors %}
+        {% element_error inline_form 'path' %}
+        {% endif %}
+    </div>
+
+    <div class="form-group">
+        {{ inline_form.description.label_tag }}
+
+        <textarea name="{{ inline_form.description.html_name }}"
+            class="form-control {% if inline_form.description.errors %}is-invalid{% endif %}" 
+            id="{{ inline_form.description.id_for_label }}"
+            cols="40"
+            rows="10">{% if inline_form.instance.id %}{{ inline_form.instance.description }}{% endif %}</textarea>
+
+        {% if field.errors %}
+        {% element_error inline_form 'description' %}
+        {% endif %}
+    </div>
+
+    <div class="form-group mb-0">
+        <label class="custom-control custom-checkbox mb-0"
+            for="{{ inline_form.DELETE.id_for_label }}">
+
+            <input type="checkbox" class="custom-control-input custom-control-input--delete"
+                name="{{ inline_form.DELETE.html_name }}"
+                id="{{ inline_form.DELETE.id_for_label }}" />
+
+            <span class="custom-control-indicator"></span>
+            <span class="custom-control-description">
+                {{ inline_form.DELETE.label | escape }}
+            </span>
+        </label>
+    </div>
+</div>
+{% endfor %}
+
+

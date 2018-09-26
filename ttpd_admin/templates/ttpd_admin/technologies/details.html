@@ -1,0 +1,475 @@
+{% extends "ttpd_admin/base_site.html" %}
+
+{% load permission_tags static %}
+
+{% block title %}TTPD Admin{% endblock %}
+
+{% block content %}
+<script>
+    function downloadCSV(csv, filename) {
+        var csvFile;
+        var downloadLink;
+
+        // CSV file
+        csvFile = new Blob([csv], {type: "text/csv"});
+
+        // Download link
+        downloadLink = document.createElement("a");
+
+        // File name
+        downloadLink.download = filename;
+
+        // Create a link to the file
+        downloadLink.href = window.URL.createObjectURL(csvFile);
+
+        // Hide download link
+        downloadLink.style.display = "none";
+
+        // Add the link to DOM
+        document.body.appendChild(downloadLink);
+
+        // Click download link
+        downloadLink.click();
+    }
+    
+    function exportTableToCSV(filename) {
+        var csv = [];
+        var rows = document.querySelectorAll("table tr");
+        
+        for (var i = 0; i < rows.length; i++) {
+            var row = [], cols = rows[i].querySelectorAll("td, th");
+            
+            for (var j = 0; j < cols.length; j++) 
+                row.push(cols[j].innerText);
+            
+            csv.push(row.join(","));        
+        }
+
+        // Download CSV file
+        downloadCSV(csv.join("\n"), filename);
+    }
+</script>
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+
+            <div class="card-header">
+               <a href="{{ object.get_absolute_url }}" style="color:#212B31; font-size: 20px">{{ object.name }}</a>
+            </div>
+            <div class="card-body">
+                <table class="table">
+                    <thead>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td scope="row">
+                                <strong><a>Year</a></strong>
+                            </td>
+                            <td scope="row">
+                                <a>{{ object.year }}</a>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td scope="row">
+                                <strong><a>Region</a></strong>
+                            </td>
+                            <td scope="row">
+                                <a>{{ object.region }}</a>
+                            </td>
+
+                        </tr>
+                        <tr>
+                            <td scope="row">
+                                <strong><a>Industries</a></strong>
+                            </td>
+                            <td scope="row">
+                                {% for industry_sector_isp in industry_sector_isps %}
+                                <a>{{ industry_sector_isp.parent.parent.name }}</a>, 
+                                {% endfor %}
+                            </td>
+                        </tr> 
+                        <tr>
+                            <td scope="row">
+                                <strong><a>Sectors</a></strong>
+                            </td>
+                            <td scope="row">
+                                {% for industry_sector_isp in industry_sector_isps %}
+                                <a>{{ industry_sector_isp.parent.name }}</a>, 
+                                {% endfor %}
+                            </td>
+                        </tr> 
+                        <tr>
+                            <td scope="row">
+                                <strong><a>Commodities</a></strong>
+                            </td>
+                            <td scope="row">
+                                {% for industry_sector_isp in industry_sector_isps %}
+                                <a>{{ industry_sector_isp.name }}</a>, 
+                                {% endfor %}
+                            </td>
+                        </tr> 
+                        <!-- end to fix -->
+                        <tr>
+                            <td scope="row">
+                                <strong><a>Protection Level</a></strong>
+                            </td>
+                            <td scope="row">
+                                <a>{{ object.protection_level }}</a>
+                            </td>
+                        </tr>
+                        <!-- end to fix -->
+                        <tr>
+                            <td scope="row">
+                                <strong><a>Description</a></strong>
+                            </td>
+                            <td scope="row">
+                                <a>{{ object.description }}</a>
+                            </td>
+                        </tr>
+                        {% if request.user|has_role:'staff' %}
+                        <tr>
+                            <td scope="row">
+                                  <strong><a>Potential Adopter Types</a></strong>
+                            </td>
+                            {% if potential_adopters.count != 0 %}
+                                <td scope="row">
+                                    {% for potential_adopter in potential_adopters %}
+                                        <a>{{ potential_adopter.adopter_type }}</a>,
+                                    {% endfor %}
+                                </td>
+                            {% else %}
+                                <td scope="row">
+                                    <a>Not Indicated</a>
+                                </td>
+                            {% endif%}
+                        </tr>
+                        {% if object.protection_level.name == 'IP Protected' %}
+                        <tr>
+                                <td scope="row">
+                                   <strong><a>IP Protection Type</a></strong>
+                                </td>
+                            {% if protection_types.count != 0 %}
+                                <td scope="row">
+                                    {% for protection_type in protection_types %}
+                                        <a>{{ protection_type.protection_type.name }}</a>,
+                                    {% endfor %}
+                                </td>
+                            {% else %}
+                                <td scope="row">
+                                    <a>Not Indicated</a>
+                                </td>
+                            {% endif%}
+                        </tr> 
+
+                        {% if request.user|has_role:'admin' %}
+                        <tr>
+                                <td scope="row">
+                                   <strong><a>is Trade Secret?</a></strong>
+                                </td>
+                            <!-- FIX: filtering if one of the ip protection types is a trade secret -->
+                            {% if 'Trade Secret' in protection_types.protection_type.name %}
+                                <td scope="row">
+                                    <a>Yes</a>
+                                </td>
+                            {% else %}
+                                <td scope="row">
+                                    <a>No</a>
+                                </td>
+                            {% endif%}
+                        </tr>
+                        {% endif%}
+
+                        {% endif%}
+
+
+                        {% if generators.count == 0 %}
+                        <tr>
+                            <td scope="row">
+                               <strong><a>Generators</a></strong>
+                            </td>
+                            <td scope="row">
+                                <a>Not Indicated</a>
+                            </td>
+                        </tr>
+                        {% endif%}
+                        {% if owners.count == 0 %}
+                        <tr>
+                            <td scope="row">
+                               <strong><a>Owners</a></strong>
+                            </td>
+                            <td scope="row">
+                                <a>Not Indicated</a>
+                            </td>
+                        </tr>
+                        {% endif %}
+                        {% endif %}
+                        <!-- 3RD LEVEL INFORMATION -->
+                        {% if request.user|has_role:'admin' %}   
+                        {% if fundings.count == 0 %}                     
+                        <tr>
+                            <td scope="row">
+                               <strong><a>Fundings</a></strong>
+                            <td scope="row">
+                                <a>Not Indicated</a>
+                            </td>
+                        </tr>
+                        {% endif%}
+                        {% if object.protection_level.name == 'IP Protected' %}
+                            {% if adopters.count == 0 %}
+                            <tr>
+                                <td scope="row">
+                                   <strong><a>Adopters</a></strong>
+                                </td>
+                                <td scope="row">
+                                    <a>Not Indicated</a>
+                                </td>
+                            </tr>
+                            {% endif %}
+                        {% endif %}
+                        {%  endif %}
+                    </tbody>
+                </table>
+                <!-- Put into Cards -->
+
+                {% if techstatuses.count > 0 %}
+                <table class="table">
+                    <thead>
+                            <th scope="col">Status of Readiness</th>
+                            <th scope="col">Year Complied</th>
+                    </thead>
+                    <tbody>
+                        {% for status in techstatuses %}
+                                <tr>
+                                    <td scope="row">
+                                        <a>{{ status.tech_status }}</a>
+                                    </td>
+                                    <td scope="row">
+                                        <a>{{ status.year_complied }}</a>
+                                    </td>
+                                </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% endif %}                
+
+                {% if generators.count > 0 %}
+                <table class="table">
+                    <thead>
+                            <th scope="col">Title</th>
+                            <th scope="col">Name</th>
+                        {% if request.user|has_role:'staff' %}
+                            <th scope="col">Field of Expertise</th>
+                            <th scope="col">Availability</th>
+                            <th scope="col">Address</th>
+                        {% else %}
+                            <th scope="col">&nbsp;</th>
+                            <th scope="col">&nbsp;</th>
+                            <th scope="col">&nbsp;</th>
+                        {% endif %}
+                    </thead>
+                    <tbody>
+                        {% for generator in generators%}
+                            <tr>
+                                <td scope="row">
+                                    <a>{{ generator.title }}</a>
+                                </td>
+                                <td scope="row">
+                                    <a>{{ generator.last_name }}, {{ generator.first_name }}</a>
+                                </td>
+                            <!-- 2ND LEVEL -->
+                                {% if request.user|has_role:'staff' %}
+                                <td scope="row">
+                                    <a>{{ generator.expertise }}</a>
+                                </td>
+                                <td scope="row">
+                                    <a>{{ generator.availability }}</a>
+                                </td>
+                                <td scope="row">
+                                    <a>{{ generator.agency.address }}</a>
+                                </td>
+                                {% endif %}
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% endif %}
+
+
+                {% if owners.count > 0 %}
+                <table class="table">
+                    <thead>
+                        <th scope="col">Owner Name</th>
+                        {% if request.user|has_role:'staff' %}
+                            <th scope="col">Phone Number</th>
+                        {% else %}
+                            <th scope="col">&nbsp;</th>
+                        {% endif %}
+                        {% if request.user|has_role:'staff' %}
+                            <th scope="col">Fax Number</th>
+                        {% else %}
+                            <th scope="col">&nbsp;</th>
+                        {% endif %}
+                        {% if request.user|has_role:'staff' %}
+                            <th scope="col">Address</th>
+                        {% else %}
+                            <th scope="col">&nbsp;</th>
+                        {% endif %}
+                        {% if request.user|has_role:'staff' %}
+                            <th scope="col">Email Address</th>
+                        {% else %}
+                            <th scope="col">&nbsp;</th>
+                        {% endif %}
+                    </thead>
+                    <tbody>
+                        {% for owner in owners%}
+                        <tr>
+                            <td scope="row">
+                                <a>{{ owner.name }}</a>
+                            </td>
+                        <!-- 2ND LEVEL -->
+                            {% if request.user|has_role:'staff' %}
+                            <td scope="row">
+                                <a>{{ owner.phone_number }}</a>
+                            </td>
+                            <td scope="row">
+                                <a>{{ owner.fax_number }}</a>
+                            </td>
+                            <td scope="row">
+                                <a>{{ owner.address }}</a>
+                            </td>
+                            <td scope="row">
+                                <a>{{ owner.email_address }}</a>
+                            </td>
+                            {% endif %}
+                        {% endfor %}                        
+                        <!-- end to fix -->
+                    </tbody>
+                </table>
+                {% endif %}
+
+                <!-- 3RD LEVEL START -->
+                {% if request.user|has_role:'admin' %}
+
+                {% if fundings.count > 0 %}
+                <table class="table">
+                    <thead>
+                        <th scope="col">Fundings</th>
+                            <th scope="col">Investment Amount</th>   
+                            <th scope="col">Duration Start</th>
+                            <th scope="col">Duration End</th>
+                            <th scope="col">Donor</th>
+                    </thead>
+                    <tbody>  
+                        {% for funding in fundings %}
+                        <tr>
+                            <td scope="row">
+                                <a>{{ funding.funding_type }}</a>
+                            </td>
+                            <td scope="row">
+                                <a>{{ funding.investment_amount }}</a>
+                            </td>
+                            <td scope="row">
+                                <a>{{ funding.duration_start }}</a>
+                            </td>
+                            <td scope="row">
+                                <a>{{ funding.duration_end }}</a>
+                            </td>
+                            <td scope="row">
+                                <a>{{ funding.donor }}</a>
+                            </td>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% endif %}
+
+                {% if adopters.count > 0 %}
+                <table class="table">
+                    <thead>
+                        <th scope="col">Adopter</th>  
+                            <th scope="col">Address</th>
+                            <th scope="col">Phone Number(s)</th>
+                            <th scope="col">Fax Number(s)</th>
+                            <th scope="col">Email Address</th>
+                            <th scope="col">Adopter Type</th>
+                    </thead>
+                    <tbody>  
+                        {% for adopter in adopters %}
+                        <tr>
+                            <td scope="row">
+                                <a>{{ adopter.name }}</a>
+                            </td>
+                            <td scope="row">
+                                <a>{{ adopter.address }}</a>
+                            </td>
+                            <td scope="row">
+                                <a>{{ adopter.phone_number }}</a>
+                            </td>
+                            <td scope="row">
+                                <a>{{ adopter.fax_number }}</a>
+                            </td>
+                            <td scope="row">
+                                <a>{{ adopter.email_address }}</a>
+                            </td>
+                            <td scope="row">
+                                <a>{{ adopter.adopter_type }}</a>
+                            </td>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% endif %}
+
+                {% if object.protection_level.name == 'IP Protected' %}
+                {% if protection_types.count > 0 %}
+                <table class="table">
+                    <thead>
+                        <th scope="col">IP Protection Type</th>  
+                            <th scope="col">Application Number</th>
+                            <th scope="col">Serial Number</th>
+                            <th scope="col">Date of Filing</th>
+                            <th scope="col">Status</th>
+                    </thead>
+                    <tbody>  
+                        {% for protection_type in protection_types %}
+                        {% if protection_type.protection_type.name == 'Trade Secret' %}
+
+                        {% else %}
+                        <tr>
+                            <td scope="row">
+                                <a>{{ protection_type.protection_type.name }}</a>
+                            </td>
+                            <td scope="row">
+                                <a>{{ protection_type.protection_type_meta.application_number }}</a>
+                            </td>
+                            <td scope="row">
+                                <a>{{ protection_type.protection_type_meta.meta_serial_number }}</a>
+                            </td>
+                            <td scope="row">
+                                <a>{{ protection_type.protection_type_meta.date_of_filing }}</a>
+                            </td>
+                            <td scope="row">
+                                <a>{{ protection_type.protection_type_meta.status }}</a>
+                            </td>
+                            <td scope="row">
+                                <a>{{ protection_type.adopter_type }}</a>
+                            </td>
+                        </tr>
+                        {% endif %}
+
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% endif %}
+                {% endif %}
+
+                {% endif %}
+            </div>
+
+            <button onclick="exportTableToCSV('details.csv')" class="btn btn-sm btn-primary pull-right">
+                    Download Details
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+

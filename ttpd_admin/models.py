@@ -3,26 +3,13 @@
 # Copyright(c) Exequiel Ceasar Navarrete <esnavarrete1@up.edu.ph>
 # Licensed under MIT
 # Version 1.0.0-alpha1
-
+from secrets import token_hex
 from pathlib import Path
 from django.db import models
 from django.dispatch import receiver
 from django.urls import reverse
 from django.contrib.auth.models import User as BaseUser
 from django.template.defaultfilters import slugify
-
-class Commodities(models.Model):
-    name = models.CharField(max_length=255)
-
-    class Meta:
-        verbose_name = "commodity"
-        verbose_name_plural = "commodities"
-
-    def get_absolute_url(self):
-        return reverse('ttpd_admin:commodities_update', kwargs={'pk': self.id})
-
-    def __str__(self):
-        return self.name
 
 class Industries(models.Model):
     name = models.CharField(max_length=255)
@@ -49,13 +36,13 @@ class Sectors(models.Model):
         return reverse('ttpd_admin:sectors_update', kwargs={'pk': self.id})
 
     def __str__(self):
-        return (self.name + " - " + self.parent.name)
+        return (self.parent.name + " - " + self.name)
 
 class ISPs(models.Model):
     name = models.CharField(max_length=255)
     parent = models.ForeignKey(Sectors, on_delete=models.CASCADE)
     specific_commodity = models.ForeignKey("self", on_delete=models.CASCADE, null=True, blank=True,
-                               limit_choices_to=models.Q(parent=None))
+                               limit_choices_to=models.Q(specific_commodity=None))
 
     class Meta:
         verbose_name = "isp"
@@ -65,7 +52,7 @@ class ISPs(models.Model):
         return reverse('ttpd_admin:isps_update', kwargs={'pk': self.id})
 
     def __str__(self):
-        return (self.name + " - " + self.parent.name + " - " + self.parent.parent.name)
+        return (self.parent.parent.name + " - " + self.parent.name + " - " + self.name)
 
 class Regions(models.Model):
     name = models.CharField(max_length=80)
@@ -196,6 +183,7 @@ class Generators(models.Model):
     first_name = models.CharField(max_length=255)
     middle_name = models.CharField(max_length=255, null=True, blank=True)
     last_name = models.CharField(max_length=255)
+    expertise = models.CharField(max_length=255, null=True, blank=True)
     availability = models.CharField(max_length=10, choices=AVAILABILITY_CHOICES, default='active')
     agency = models.ForeignKey(Agencies, on_delete=models.CASCADE, limit_choices_to={'private_flag': False})
 
@@ -241,7 +229,6 @@ class FundingTypes(models.Model):
         return self.name
 
 class TechProtectionTypesMetadata(models.Model):
-
     application_number = models.CharField(max_length=255, blank=True)
     meta_serial_number = models.CharField(max_length=255, blank=True)
     date_of_filing = models.DateField(blank=True)
@@ -268,13 +255,6 @@ class Technologies(models.Model):
     protection_level = models.ForeignKey(ProtectionLevels, on_delete=models.CASCADE)
     est_ownership_cost = models.PositiveIntegerField(null=True, blank=True)
     region = models.ForeignKey(Regions, null=True, blank=True, on_delete=models.CASCADE)
-
-
-    commodities = models.ManyToManyField(
-      Commodities,
-      through='TechnologyCommodities',
-      through_fields=('technology', 'commodity')
-    )
 
     industry_sector_isps = models.ManyToManyField(
       ISPs,
@@ -339,14 +319,6 @@ class Technologies(models.Model):
 
     def __str__(self):
         return self.name
-
-class TechnologyCommodities(models.Model):
-    technology = models.ForeignKey(Technologies, on_delete=models.CASCADE)
-    commodity = models.ForeignKey(Commodities, on_delete=models.CASCADE)
-
-    class Meta:
-        verbose_name = "technology commodity"
-        verbose_name_plural = "technology commodities"
 
 class TechnologyIndustrySectorISPs(models.Model):
     technology = models.ForeignKey(Technologies, on_delete=models.CASCADE)
@@ -446,6 +418,59 @@ class FundingImplementors(models.Model):
     class Meta:
         verbose_name = "technology funding implementor"
         verbose_name_plural = "technology funding implementors"
+
+
+def technology_assets_path(instance, filename):
+    ext = str(Path(filename).suffix).strip('.')
+    filepath = f"technology-assets/{instance.technology.id}/{slugify(instance.asset_type.name)}-{token_hex(5)}.{ext}"
+
+    return filepath
+
+class TechnologyAssets(models.Model):
+    technology = models.ForeignKey(Technologies, on_delete=models.CASCADE, related_name='assets')
+    asset_type = models.ForeignKey('TechnologyAssetTypes', on_delete=models.CASCADE)
+    path = models.FileField(upload_to=technology_assets_path, blank=True)
+    description = models.TextField(blank=True)
+
+    class Meta:
+        verbose_name = "technology asset"
+        verbose_name_plural = "technology assets"
+
+class TechnologyAssetTypes(models.Model):
+    name = models.CharField(max_length=255)
+
+    class Meta:
+        verbose_name = "technology asset type"
+        verbose_name_plural = "Technology asset typs"
+
+    def __str__(self):
+        return self.name
+
+def technology_description_path(instance, filename):
+    ext = str(Path(filename).suffix).strip('.')
+    filepath = f"technology-description/{instance.technology.id}/{slugify(instance.description_type.name)}-{token_hex(5)}.{ext}"
+
+    return filepath
+
+class TechnologyFullDescription(models.Model):
+    # FULL DESCRIPTION
+    technology = models.ForeignKey(Technologies, on_delete=models.CASCADE, related_name='fulldescription')
+    description_type = models.ForeignKey('TechnologyFullDescriptionTypes', on_delete=models.CASCADE)
+    path = models.FileField(upload_to=technology_description_path, blank=True)
+
+    class Meta:
+        verbose_name = "technology description"
+        verbose_name_plural = "technology description"
+
+class TechnologyFullDescriptionTypes(models.Model):
+    name = models.CharField(max_length=255)
+
+    class Meta:
+        verbose_name = "technology description type"
+        verbose_name_plural = "Technology description types"
+
+    def __str__(self):
+        return self.name
 
 # TODO: Re-implement the region field as mentioned in the discussion.
 

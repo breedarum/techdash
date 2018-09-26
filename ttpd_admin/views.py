@@ -7,7 +7,7 @@
 import json
 import base64
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.views.generic import edit, ListView
+from django.views.generic import edit, ListView, DetailView
 from django.db import IntegrityError, transaction
 from django.http import HttpResponseBadRequest, HttpResponseRedirect
 from django.urls import reverse_lazy
@@ -21,15 +21,15 @@ from ttpd.roles import *
 from .forms import (
   UsersForm,
   TechnologyForm,
-  # TechnologyAdoptersFormSet,
   TechnologyReadinessStatusFormSet,
   TechnologyIpProtectionMetadataFormSet,
   TradeSecretIpProtectionFormSet,
   TechnologyFundingsFormSet,
+  TechnologyAssetsFormSet,
+  TechnologyFullDescriptionFormSet,
   UsersUpdateForm
 )
 from .models import (
-  Commodities,
   Industries,
   Sectors,
   ISPs,
@@ -47,7 +47,6 @@ from .models import (
   FundingTypes,
   TechStatus,
   Technologies,
-  TechnologyCommodities,
   TechnologyIndustrySectorISPs,
   TechnologyCategories,
   TechnologyGenerators,
@@ -58,6 +57,10 @@ from .models import (
   TechnologyProtectionStatus,
   TechProtectionTypesMetadata,
   TechnologyStatuses,
+  TechnologyAssets,
+  TechnologyAssetTypes,
+  TechnologyFullDescription,
+  TechnologyFullDescriptionTypes,
   Fundings,
   FundingImplementors,
   User
@@ -141,37 +144,6 @@ class ActivityLogsList(BaseAdminView, HasRoleMixin, ListView):
     model = LogEntry
     template_name = 'ttpd_admin/activity-logs/index.html'
     paginate_by = 20
-
-class CommoditiesList(BaseAdminView, HasRoleMixin, ListView):
-    allowed_roles = [Admin]
-    model = Commodities
-    template_name = 'ttpd_admin/commodities/index.html'
-    paginate_by = 20
-
-    def get_context_data(self, **kwargs):
-        context = ListView.get_context_data(self, **kwargs)
-        context['pagination_item_ranges'] = range(1, (context['paginator'].num_pages + 1))
-        return context
-
-class CommoditiesCreate(BaseAdminView, HasRoleMixin, LoggedCreateView):
-    allowed_roles = [Admin]
-    model = Commodities
-    fields = ['name']
-    template_name = 'ttpd_admin/commodities/form.html'
-    success_url = reverse_lazy('ttpd_admin:commodities_list')
-
-class CommoditiesUpdate(BaseAdminView, HasRoleMixin, LoggedUpdateView):
-    allowed_roles = [Admin]
-    model = Commodities
-    fields = ['name']
-    template_name = 'ttpd_admin/commodities/form.html'
-    success_url = reverse_lazy('ttpd_admin:commodities_list')
-
-class CommoditiesDelete(BaseAdminView, HasRoleMixin, LoggedDeleteView):
-    allowed_roles = [Admin]
-    model = Commodities
-    template_name = 'ttpd_admin/commodities/delete.html'
-    success_url = reverse_lazy('ttpd_admin:commodities_list')
 
 class IndustriesList(BaseAdminView, HasRoleMixin, ListView):
     allowed_roles = [Admin]
@@ -487,14 +459,14 @@ class GeneratorsList(BaseAdminView, HasRoleMixin, ListView):
         
 class GeneratorsCreate(BaseAdminView, HasRoleMixin, LoggedCreateView):
     model = Generators
-    fields = ['title', 'first_name', 'middle_name', 'last_name', 'availability', 'agency']
+    fields = ['title', 'first_name', 'middle_name', 'last_name', 'availability', 'agency', 'expertise']
     template_name = 'ttpd_admin/generators/form.html'
     success_url = reverse_lazy('ttpd_admin:generators_list')
 
 class GeneratorsUpdate(BaseAdminView, HasRoleMixin, LoggedUpdateView):
     allowed_roles = [Admin]
     model = Generators
-    fields = ['title', 'first_name', 'middle_name', 'last_name', 'availability', 'agency']
+    fields = ['title', 'first_name', 'middle_name', 'last_name', 'availability', 'agency', 'expertise']
     template_name = 'ttpd_admin/generators/form.html'
     success_url = reverse_lazy('ttpd_admin:generators_list')
 
@@ -546,6 +518,45 @@ class TechnologiesList(BaseAdminView, HasPermissionsMixin, ListView):
         context['pagination_item_ranges'] = range(1, (context['paginator'].num_pages + 1))
         return context
 
+class TechnologiesDetails(BaseAdminView, HasPermissionsMixin, DetailView):
+    required_permission = 'list_technologies'
+    model = Technologies 
+    fields = [
+          'name',
+          'region',
+          'categories',
+          'industry_sector_isps',
+          'protection_level',
+          'year',
+          'description',
+          'owners',
+          'generators',
+          'adopters',
+          'potential_adopters',
+          'fundings',
+          'statuses',
+
+        ]
+    template_name = 'ttpd_admin/technologies/details.html'
+
+    def get_context_data(self, **kwargs):
+        context = super(TechnologiesDetails, self).get_context_data(**kwargs)
+
+        instance = self.get_object()
+        context['industry_sector_isps'] = instance.industry_sector_isps.all()
+        context['categories'] = instance.categories.all()
+        context['owners'] = instance.owners.all()
+        context['generators'] = instance.generators.all()
+        context['adopters'] = instance.adopters.all()
+        context['potential_adopters'] = instance.potential_adopters.all()
+        context['protection_types'] = TechnologyProtectionTypes.objects.filter(technology=instance.id)
+        context['fundings'] = instance.fundings.all()
+        status_metadata = TechnologyStatuses.objects.filter(technology=instance.id)
+        context['techstatuses'] = status_metadata.all();
+
+
+        return context
+
 class TechnologiesCreate(BaseAdminView, HasPermissionsMixin, LoggedCreateView):
     required_permission = 'create_technologies'
     model = Technologies
@@ -570,6 +581,55 @@ class TechnologiesCreate(BaseAdminView, HasPermissionsMixin, LoggedCreateView):
                 context[context_key] = TechnologyReadinessStatusFormSet(self.request.POST, prefix=context_key)
             else:
                 context[context_key] = TechnologyReadinessStatusFormSet(prefix=context_key)
+
+        # create formsets for assets
+        tech_asset_types = TechnologyAssetTypes.objects.all()
+        context['tech_asset_types'] = tech_asset_types
+        context['tech_assets_formset_prefix'] = 'tech_assets_'
+        context['tech_asset_types_ip_protected'] = [
+          'Narrative Advantages',
+          'Technical Evidences',
+          'Economic Evidences',
+          'Market Study Summary',
+          'Valuation Summary',
+          'Freedom to Operate Summary',
+          'Proposed Term Sheet',
+          'Fairness Opinion Report',
+          'Video Clips'
+        ]
+
+        for tech_asset_type in tech_asset_types:
+            snake_asset_type = snakecase(slugify(tech_asset_type.name))
+            context_key = f"{context['tech_assets_formset_prefix']}{snake_asset_type}"
+
+            # if the request method is "POST" pass it to the form set.
+            if self.request.POST:
+                context[context_key] = TechnologyAssetsFormSet(
+                  self.request.POST,
+                  self.request.FILES,
+                  prefix=context_key
+                )
+            else:
+                context[context_key] = TechnologyAssetsFormSet(prefix=context_key)
+
+        # create formsets for full-description
+        tech_fulldescription_types = TechnologyFullDescriptionTypes.objects.all()
+        context['tech_fulldescription_types'] = tech_fulldescription_types
+        context['tech_fulldescriptions_formset_prefix'] = 'tech_fulldescription_'
+
+        for tech_fulldescription_type in tech_fulldescription_types:
+            snake_fulldescription_type = snakecase(slugify(tech_fulldescription_type.name))
+            context_key = f"{context['tech_fulldescriptions_formset_prefix']}{snake_fulldescription_type}"
+
+            # if the request method is "POST" pass it to the form set.
+            if self.request.POST:
+                context[context_key] = TechnologyFullDescriptionFormSet(
+                  self.request.POST,
+                  self.request.FILES,
+                  prefix=context_key
+                )
+            else:
+                context[context_key] = TechnologyFullDescriptionFormSet(prefix=context_key)
 
          # create formsets for technology_funding types
         technology_funding_types = FundingTypes.objects.all()
@@ -675,9 +735,6 @@ class TechnologiesCreate(BaseAdminView, HasPermissionsMixin, LoggedCreateView):
                     # save the industry sectors
                     self.save_technology_industry_sector_isp(technology, form.cleaned_data.get('industry_sector_isps'))
 
-                    # save the commodities
-                    self.save_technology_commodities(technology, form.cleaned_data.get('commodities'))
-
                     # save the status of readiness data
                     self.save_status_of_readiness_data(technology, context)
 
@@ -692,6 +749,12 @@ class TechnologiesCreate(BaseAdminView, HasPermissionsMixin, LoggedCreateView):
 
                     # save the technology fundings
                     self.save_technology_fundings(technology, context)
+
+                    # restrict file types
+                    self.save_assets(technology, context)
+
+                    # restrict file types
+                    self.save_full_description(technology, context)
 
                     # save the adopters and ip protection metadata only if the protection level is IP Protected
                     if protection_level.name.lower() == 'ip protected':
@@ -753,6 +816,24 @@ class TechnologiesCreate(BaseAdminView, HasPermissionsMixin, LoggedCreateView):
 
                 break
 
+        for tech_asset_type in context['tech_asset_types']:
+            snake_asset_type = snakecase(slugify(tech_asset_type.name))
+            context_key = f"{context['tech_assets_formset_prefix']}{snake_asset_type}"
+            tech_asset_type_form = context[context_key]
+
+            # check if the inline formsets are valid or not
+            if not tech_asset_type_form.is_valid():
+                valid = False
+
+        for tech_fulldescription_type in context['tech_fulldescription_types']:
+            snake_fulldescription_type = snakecase(slugify(tech_fulldescription_type.name))
+            context_key = f"{context['tech_fulldescriptions_formset_prefix']}{snake_fulldescription_type}"
+            tech_fulldescription_type_form = context[context_key]
+
+            # check if the inline formsets are valid or not
+            if not tech_fulldescription_type_form.is_valid():
+                valid = False
+
         return valid
 
     def save_adopters(self, technology, cleaned_adopters):
@@ -810,19 +891,6 @@ class TechnologiesCreate(BaseAdminView, HasPermissionsMixin, LoggedCreateView):
 
             # add it all at once
             TechnologyGenerators.objects.bulk_create(generators)
-
-    def save_technology_commodities(self, technology, cleaned_commodities):
-        num_commodities = len(cleaned_commodities)
-
-        if num_commodities > 0:
-            commodities = []
-
-            # create m2m commodity instance on the fly
-            for commodity in cleaned_commodities:
-                commodities.append(TechnologyCommodities(technology=technology, commodity=commodity))
-
-            # add it all at once
-            TechnologyCommodities.objects.bulk_create(commodities)
 
     def save_technology_industry_sector_isp(self, technology, cleaned_industry_sector_isps):
         num_industry_sectors = len(cleaned_industry_sector_isps)
@@ -968,6 +1036,52 @@ class TechnologiesCreate(BaseAdminView, HasPermissionsMixin, LoggedCreateView):
         if num_ip_protections > 0:
             TechnologyProtectionTypes.objects.bulk_create(ip_protections)
 
+    def save_assets(self, technology, context):
+        assets = []
+
+        for tech_asset_type in context['tech_asset_types']:
+            snake_asset_type = snakecase(slugify(tech_asset_type.name))
+            context_key = f"{context['tech_assets_formset_prefix']}{snake_asset_type}"
+            tech_asset_form = context[context_key]
+
+            if tech_asset_form.is_valid():
+                tech_asset_form.instance = technology
+                models = tech_asset_form.save(commit=False)
+
+                # loop through all the asset forms and create necessary objects
+                for asset in models:
+                    asset.asset_type = tech_asset_type
+
+                    assets.append(asset)
+
+        # add all at once when there is m2m relationships to be created
+        num_assets = len(assets)
+        if num_assets > 0:
+            TechnologyAssets.objects.bulk_create(assets)
+
+    def save_full_description(self, technology, context):
+        fulldescriptions = []
+
+        for tech_fulldescription_type in context['tech_fulldescription_types']:
+            snake_fulldescription_type = snakecase(slugify(tech_fulldescription_type.name))
+            context_key = f"{context['tech_fulldescriptions_formset_prefix']}{snake_fulldescription_type}"
+            tech_fulldescription_form = context[context_key]
+
+            if tech_fulldescription_form.is_valid():
+                tech_fulldescription_form.instance = technology
+                models = tech_fulldescription_form.save(commit=False)
+
+                # loop through all the asset forms and create necessary objects
+                for fulldescription in models:
+                    fulldescription.description_type = tech_fulldescription_type
+
+                    fulldescriptions.append(fulldescription)
+
+        # add all at once when there is m2m relationships to be created
+        num_fulldescriptions = len(fulldescriptions)
+        if num_fulldescriptions > 0:
+            TechnologyFullDescription.objects.bulk_create(fulldescriptions)
+
 class TechnologiesUpdate(BaseAdminView, HasPermissionsMixin, LoggedUpdateView):
     required_permission = 'update_technologies'
     model = Technologies
@@ -984,6 +1098,8 @@ class TechnologiesUpdate(BaseAdminView, HasPermissionsMixin, LoggedUpdateView):
         context.update(self.setup_technology_readiness_formset_context(technology))
         context.update(self.setup_technology_funding_formset_context(technology))
         context.update(self.setup_technology_ip_protection_formset_context(technology))
+        context.update(self.setup_technology_assets_formset_context(technology))
+        context.update(self.setup_technology_full_description_formset_context(technology))
 
         return context
 
@@ -1016,7 +1132,7 @@ class TechnologiesUpdate(BaseAdminView, HasPermissionsMixin, LoggedUpdateView):
                 formset_kwargs['instance'] = technology
                 formset_kwargs['queryset'] = formset_queryset
 
-            # if the request method is "POST" pass it to the form set.
+            # if the request method is "POST" pass its
             if self.request.POST:
                 context[context_key] = TechnologyReadinessStatusFormSet(self.request.POST, **formset_kwargs)
             else:
@@ -1163,6 +1279,99 @@ class TechnologiesUpdate(BaseAdminView, HasPermissionsMixin, LoggedUpdateView):
 
         return context
 
+    def setup_technology_assets_formset_context(self, technology):
+        context = {}
+
+        # create formsets for assets
+        tech_assets_related = TechnologyAssets.objects.filter(technology=technology).select_related('asset_type')
+        tech_asset_types = TechnologyAssetTypes.objects.all()
+        context['tech_asset_types'] = tech_asset_types
+        context['tech_assets_formset_prefix'] = 'tech_assets_'
+        context['tech_asset_types_ip_protected'] = [
+          'Narrative Advantages',
+          'Technical Evidences',
+          'Economic Evidences',
+          'Market Study Summary',
+          'Valuation Summary',
+          'Freedom to Operate Summary',
+          'Proposed Term Sheet',
+          'Fairness Opinion Report',
+          'Video Clips'
+        ]
+
+        for tech_asset_type in tech_asset_types:
+            snake_asset_type = snakecase(slugify(tech_asset_type.name))
+            context_key = f"{context['tech_assets_formset_prefix']}{snake_asset_type}"
+
+            # check if the funding type matches the one related to the technology
+            # if it is, create a queryset that filters the previously fetched data
+            formset_queryset = None
+            for tech_asset_related in tech_assets_related:
+                if tech_asset_type == tech_asset_related.asset_type:
+                    formset_queryset = tech_assets_related.filter(asset_type=tech_asset_type)
+
+            # dynamically assemble the formset kwargs
+            formset_kwargs = {
+              'prefix': context_key
+            }
+
+            if formset_queryset != None:
+                formset_kwargs['instance'] = technology
+                formset_kwargs['queryset'] = formset_queryset
+
+            # if the request method is "POST" pass it to the form set.
+            if self.request.POST:
+                context[context_key] = TechnologyAssetsFormSet(
+                  self.request.POST,
+                  self.request.FILES,
+                  **formset_kwargs
+                )
+            else:
+                context[context_key] = TechnologyAssetsFormSet(**formset_kwargs)
+
+        return context
+
+    def setup_technology_full_description_formset_context(self, technology):
+        context = {}
+
+        # create formsets for full-description
+        tech_fulldescriptions_related = TechnologyFullDescription.objects.filter(technology=technology).select_related('description_type')
+        tech_fulldescription_types = TechnologyFullDescriptionTypes.objects.all()
+        context['tech_fulldescription_types'] = tech_fulldescription_types
+        context['tech_fulldescriptions_formset_prefix'] = 'tech_fulldescription_'
+
+        for tech_fulldescription_type in tech_fulldescription_types:
+            snake_fulldescription_type = snakecase(slugify(tech_fulldescription_type.name))
+            context_key = f"{context['tech_fulldescriptions_formset_prefix']}{snake_fulldescription_type}"
+
+            # check if the funding type matches the one related to the technology
+            # if it is, create a queryset that filters the previously fetched data
+            formset_queryset = None
+            for tech_fulldescription_related in tech_fulldescriptions_related:
+                if tech_fulldescription_type == tech_fulldescription_related.description_type:
+                    formset_queryset = tech_fulldescriptions_related.filter(description_type=tech_fulldescription_type)
+
+            # dynamically assemble the formset kwargs
+            formset_kwargs = {
+              'prefix': context_key
+            }
+
+            if formset_queryset != None:
+                formset_kwargs['instance'] = technology
+                formset_kwargs['queryset'] = formset_queryset
+
+            # if the request method is "POST" pass it to the form set.
+            if self.request.POST:
+                context[context_key] = TechnologyFullDescriptionFormSet(
+                  self.request.POST,
+                  self.request.FILES,
+                  **formset_kwargs
+                )
+            else:
+                context[context_key] = TechnologyFullDescriptionFormSet(**formset_kwargs)
+
+        return context
+
     def form_valid(self, form):
         context = self.get_context_data()
 
@@ -1198,10 +1407,6 @@ class TechnologiesUpdate(BaseAdminView, HasPermissionsMixin, LoggedUpdateView):
                         if 'industry_sectors' in form.changed_data:
                             self.save_technology_industry_sectors(technology, form.cleaned_data.get('industry_sectors'))
 
-                        # save the commodities
-                        if 'commodities' in form.changed_data:
-                            self.save_technology_commodities(technology, form.cleaned_data.get('commodities'))
-
                         # save the generators
                         if 'generators' in form.changed_data:
                             self.save_technology_generators(technology, form.cleaned_data.get('generators'))
@@ -1223,6 +1428,12 @@ class TechnologiesUpdate(BaseAdminView, HasPermissionsMixin, LoggedUpdateView):
 
                     # save the technology fundings
                     self.save_technology_fundings(technology, context)
+
+                    # save the technology assets
+                    self.save_assets(technology, context)
+
+                    # save the technology assets
+                    self.save_full_description(technology, context)
 
                     if protection_level.name.lower() == 'ip protected':
                         self.save_ip_protection_data(technology, context)
@@ -1279,6 +1490,24 @@ class TechnologiesUpdate(BaseAdminView, HasPermissionsMixin, LoggedUpdateView):
 
                 break
 
+        for tech_asset_type in context['tech_asset_types']:
+            snake_asset_type = snakecase(slugify(tech_asset_type.name))
+            context_key = f"{context['tech_assets_formset_prefix']}{snake_asset_type}"
+            tech_asset_type_form = context[context_key]
+
+            # check if the inline formsets are valid or not
+            if not tech_asset_type_form.is_valid():
+                valid = False
+
+        for tech_fulldescription_type in context['tech_fulldescription_types']:
+            snake_fulldescription_type = snakecase(slugify(tech_fulldescription_type.name))
+            context_key = f"{context['tech_fulldescriptions_formset_prefix']}{snake_fulldescription_type}"
+            tech_fulldescription_type_form = context[context_key]
+
+            # check if the inline formsets are valid or not
+            if not tech_fulldescription_type_form.is_valid():
+                valid = False
+
         return valid
 
     # TODO: implement a diffing logic so that only items that needs to be added/removed are persisted
@@ -1318,23 +1547,6 @@ class TechnologiesUpdate(BaseAdminView, HasPermissionsMixin, LoggedUpdateView):
             TechnologyIndustrySectors.objects.bulk_create(industry_sectors)
 
     # TODO: implement a diffing logic so that only items that needs to be added/removed are persisted
-    def save_technology_commodities(self, technology, cleaned_commodities):
-        num_commodities = len(cleaned_commodities)
-
-        if num_commodities > 0:
-            commodities = []
-
-            # clear all existing relationships first
-            TechnologyCommodities.objects.filter(technology=technology).delete()
-
-            # create m2m commodity instance on the fly
-            for commodity in cleaned_commodities:
-                commodities.append(TechnologyCommodities(technology=technology, commodity=commodity))
-
-            # add it all at once
-            TechnologyCommodities.objects.bulk_create(commodities)
-
-    # TODO: implement a diffing logic so that only items that needs to be added/removed are persisted
     def save_technology_generators(self, technology, cleaned_generators):
         num_generators = len(cleaned_generators)
 
@@ -1342,14 +1554,14 @@ class TechnologiesUpdate(BaseAdminView, HasPermissionsMixin, LoggedUpdateView):
             generators = []
 
             # clear all existing relationships first
-            TechGenerators.objects.filter(technology=technology).delete()
+            TechnologyGenerators.objects.filter(technology=technology).delete()
 
             # create m2m generator instance on the fly
             for generator in cleaned_generators:
-                generators.append(TechGenerators(technology=technology, generator=generator))
+                generators.append(TechnologyGenerators(technology=technology, generator=generator))
 
             # add it all at once
-            TechGenerators.objects.bulk_create(generators)
+            TechnologyGenerators.objects.bulk_create(generators)
 
     # TODO: implement a diffing logic so that only items that needs to be added/removed are persisted
     def save_potential_adopters(self, technology, cleaned_potential_adopters):
@@ -1507,22 +1719,23 @@ class TechnologiesUpdate(BaseAdminView, HasPermissionsMixin, LoggedUpdateView):
                     funding_type_item.save()
 
                     # clear all existing relationships first
-                    TechnologyFundingImplementors.objects.filter(funding=funding_type_item).delete()
+                    FundingImplementors.objects.filter(funding=funding_type_item).delete()
 
                     # create the objects for the implementors
                     for implementing_agency in clean_data_ref.get('implementing_agencies'):
                         technology_funding_implementors.append(
-                          TechnologyFundingImplementors(funding=funding_type_item, implementor=implementing_agency)
+                          FundingImplementors(funding=funding_type_item, implementor=implementing_agency)
                         )
 
         num_del_technology_funding = len(del_technology_funding)
         if num_del_technology_funding > 0:
-            TechnologyFundings.objects.filter(pk__in=del_technology_funding, technology=technology).delete()
+            Fundings.objects.filter(pk__in=del_technology_funding, technology=technology).delete()
 
         # add all at once when there is m2m relationships to be created
         num_technology_funding_implementors = len(technology_funding_implementors)
         if num_technology_funding_implementors > 0:
-            TechnologyFundingImplementors.objects.bulk_create(technology_funding_implementors)
+            FundingImplementors.objects.bulk_create(technology_funding_implementors)
+
 
     # TODO: implement a diffing logic so that only items that needs to be added/removed are persisted
     # NOTE: since the model looped in this part can be added or revised according to the given document,
@@ -1606,7 +1819,7 @@ class TechnologiesUpdate(BaseAdminView, HasPermissionsMixin, LoggedUpdateView):
         # del_ip_protections = []
         num_del_meta_protections = len(del_meta_protections)
         if num_del_meta_protections > 0:
-            TechnologyProtectionTypesMetadata.objects.filter(pk__in=del_meta_protections).delete()
+            TechProtectionTypesMetadata.objects.filter(pk__in=del_meta_protections).delete()
 
         num_del_ip_protections = len(del_ip_protections)
         if num_del_ip_protections > 0:
@@ -1616,6 +1829,58 @@ class TechnologiesUpdate(BaseAdminView, HasPermissionsMixin, LoggedUpdateView):
         num_ip_protections = len(ip_protections)
         if num_ip_protections > 0:
             TechnologyProtectionTypes.objects.bulk_create(ip_protections)
+
+    def save_assets(self, technology, context):
+        for tech_asset_type in context['tech_asset_types']:
+            snake_asset_type = snakecase(slugify(tech_asset_type.name))
+            context_key = f"{context['tech_assets_formset_prefix']}{snake_asset_type}"
+            tech_asset_form = context[context_key]
+
+            if tech_asset_form.is_valid() and tech_asset_form.has_changed():
+                tech_asset_form.instance = technology
+                models = tech_asset_form.save(commit=False)
+
+                # loop through all the asset forms create association between the asset and the type
+                for asset in models:
+                    asset.asset_type = tech_asset_type
+
+                # remove any marked for deletion objects
+                for del_object in tech_asset_form.deleted_objects:
+                    del_object.delete()
+
+                # save any changed objects
+                for changed_object in tech_asset_form.changed_objects:
+                    changed_object.save()
+
+                # save any new objects
+                for new_object in tech_asset_form.new_objects:
+                    new_object.save()
+
+    def save_full_description(self, technology, context):
+        for tech_fulldescription_type in context['tech_fulldescription_types']:
+            snake_fulldescription_type = snakecase(slugify(tech_fulldescription_type.name))
+            context_key = f"{context['tech_fulldescriptions_formset_prefix']}{snake_fulldescription_type}"
+            tech_fulldescription_form = context[context_key]
+
+            if tech_fulldescription_form.is_valid() and tech_fulldescription_form.has_changed():
+                tech_fulldescription_form.instance = technology
+                models = tech_fulldescription_form.save(commit=False)
+
+                # loop through all the asset forms create association between the asset and the type
+                for fulldescription in models:
+                    fulldescription.description_type = tech_fulldescription_type
+
+                # remove any marked for deletion objects
+                for del_object in tech_fulldescription_form.deleted_objects:
+                    del_object.delete()
+
+                # save any changed objects
+                for changed_object in tech_fulldescription_form.changed_objects:
+                    changed_object.save()
+
+                # save any new objects
+                for new_object in tech_fulldescription_form.new_objects:
+                    new_object.save()
 
 class TechnologiesDelete(BaseAdminView, HasPermissionsMixin, LoggedDeleteView):
     required_permission = 'remove_technologies'
@@ -1637,11 +1902,8 @@ class TechnologiesDelete(BaseAdminView, HasPermissionsMixin, LoggedDeleteView):
                     # delete industry sectors associated to the technology
                     TechnologyIndustrySectorISPs.objects.filter(technology=self.object).delete()
 
-                    # delete commodities associated to the technology
-                    TechnologyCommodities.objects.filter(technology=self.object).delete()
-
                     # delete generators associated to the technology
-                    TechGenerators.objects.filter(technology=self.object).delete()
+                    TechnologyGenerators.objects.filter(technology=self.object).delete()
 
                     # delete potential adopters associated to the technology
                     TechnologyPotentialAdopters.objects.filter(technology=self.object).delete()
@@ -1652,11 +1914,14 @@ class TechnologiesDelete(BaseAdminView, HasPermissionsMixin, LoggedDeleteView):
                     # delete adopters associated to the technology
                     TechnologyAdopters.objects.filter(technology=self.object).delete()
 
+                    # delete statuses associated to the technology
+                    TechnologyStatuses.objects.filter(technology=self.object).delete()
+
                     # delete the associated assets to the technology
                     TechnologyAssets.objects.filter(technology=self.object).delete()
 
-                    # delete statuses associated to the technology
-                    TechnologyStatuses.objects.filter(technology=self.object).delete()
+                    # delete the associated assets to the technology
+                    TechnologyFullDescription.objects.filter(technology=self.object).delete()
 
                     # delete fundings associated to the technology
                     fundings = Fundings.objects.filter(technology=self.object)
@@ -1688,12 +1953,27 @@ class TechnologiesDelete(BaseAdminView, HasPermissionsMixin, LoggedDeleteView):
 
         return HttpResponseRedirect(success_url)
 
-
-
-# ADD: TechnologiesDetails
-
 # NOTE: if we need to customize the user model, a complete guide on the link is given below
 #       <https://simpleisbetterthancomplex.com/tutorial/2016/07/22/how-to-extend-django-user-model.html>
+class UsersProfile(BaseAdminView, HasPermissionsMixin, DetailView):
+    required_permission = 'profile_users'
+    model = User
+    template_name = 'ttpd_admin/users/profile.html'
+    
+    fields = [
+          'username',
+          'first_name',
+          'last_name',
+          'is_staff',
+          'last_login',
+          'email_address'
+        ]
+
+    def get_context_data(self, **kwargs):
+        context = super(UsersProfile, self).get_context_data(**kwargs)
+        instance = self.get_object()
+        return context
+
 class UsersList(BaseAdminView, HasRoleMixin, ListView):
     allowed_roles = [Admin]
     model = User

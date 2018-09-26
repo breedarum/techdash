@@ -15,17 +15,6 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='Commodities',
-            fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=255)),
-            ],
-            options={
-                'verbose_name': 'commodity',
-                'verbose_name_plural': 'commodities',
-            },
-        ),
-        migrations.CreateModel(
             name='Industries',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
@@ -178,6 +167,7 @@ class Migration(migrations.Migration):
                 ('first_name', models.CharField(max_length=255)),
                 ('middle_name', models.CharField(blank=True, max_length=255, null=True)),
                 ('last_name', models.CharField(max_length=255)),
+                ('field_of_expertise', models.CharField(max_length=255)),
                 ('availability', models.CharField(choices=[('active', 'Active'), ('retired', 'Retired'), ('deceased', 'Deceased')], default='active', max_length=10)),
                 ('agency', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='associated_generators', to='ttpd_admin.Agencies')),
             ],

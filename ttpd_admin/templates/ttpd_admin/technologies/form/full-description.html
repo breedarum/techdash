@@ -1,0 +1,26 @@
+
+{% load description_inline_formset snake_case %}
+
+{% for tech_fulldescription_type in tech_fulldescription_types %}
+
+{% with fulldescription_type_snake=tech_fulldescription_type.name|slugify|snake_case %}
+
+<div class="card card--asset-types card--{{ tech_fulldescription_type.name | slugify }}{% if forloop.last %} mb-0{% endif %}">
+    <div class="card-header">
+        <strong>{{ tech_fulldescription_type.name | escape }}</strong>
+
+        <a href="#" class="add-entry pull-right">
+            <i class="fa fa-plus" aria-hidden="true"></i>
+            Add Entry
+
+        </a>
+    </div>
+    <div class="card-body">
+        {% description_inline_formset tech_fulldescriptions_formset_prefix fulldescription_type_snake %}
+    </div>
+</div>
+{% endwith %}
+{% endfor %}
+
+
+

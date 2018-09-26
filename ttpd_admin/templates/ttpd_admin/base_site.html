@@ -5,7 +5,6 @@
 
 {% block head_styles %}
 {{ block.super }}
-
 <style>
     .sidebar-nav .nav-item-icon {
         float: left;
@@ -58,7 +57,7 @@
                 <div class="dropdown-header text-center">
                     <strong>Settings</strong>
                 </div>
-                <a class="dropdown-item" href="{% url 'admin:index' %}">
+                <a class="dropdown-item" href="{% url 'ttpd_admin:users_profile' pk=user.id %}">
                     <i class="fa fa-user"></i> Profile
                 </a>
                 <a class="dropdown-item" href="{% url 'admin:index' %}">
@@ -95,12 +94,7 @@
                     </a>
 
                     <ul class="nav-dropdown-items">
-                        <li class="nav-item nav-item--iconized">
-                            <a class="nav-link" href="{% url 'ttpd_admin:commodities_list' %}">
-                                <span class="nav-link-text">Commodities</span>
-                            </a>
-                        </li>
-                        <li class="nav-item nav-item--iconized">
+                       <li class="nav-item nav-item--iconized">
                             <a class="nav-link"
                                 href="{% url 'ttpd_admin:industries_list' %}">
                                 <span class="nav-link-text">Industries</span>
